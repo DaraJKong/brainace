@@ -27,7 +27,7 @@ use iced::{executor, window, Alignment, Application, Color, Command, Font, Lengt
 
 pub struct App {
     fsrs: FSRS,
-    deck: Deck,
+    deck: Option<Deck>,
     reviewing_id: usize,
 }
 
@@ -55,16 +55,21 @@ impl Application for App {
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let fsrs = FSRS::default();
 
-        let mathematical_constants = fs::read_to_string("mathematical_constants.ron").unwrap();
-        let deck = ron::from_str(&mathematical_constants).unwrap();
+        let batch = [
+            window::change_mode(window::Id::MAIN, Mode::Fullscreen),
+            Command::perform(
+                load_file("mathematical_constants.ron".into()),
+                Message::DeckLoaded,
+            ),
+        ];
 
         (
             Self {
                 fsrs,
-                deck,
+                deck: None,
                 reviewing_id: 0,
             },
-            window::change_mode(window::Id::MAIN, Mode::Fullscreen),
+            Command::batch(batch),
         )
     }
 
@@ -94,45 +99,57 @@ impl Application for App {
             Message::DeckSaved(Ok(path)) => Command::none(),
             Message::DeckLoaded(Err(error)) | Message::DeckSaved(Err(error)) => Command::none(),
             Message::CardMessage(i, CardMessage::Delete) => {
-                self.deck.cards.remove(i);
+                if let Some(deck) = &mut self.deck {
+                    deck.cards.remove(i);
+                }
 
                 Command::none()
             }
             Message::CardMessage(i, card_message) => {
-                self.deck.cards[i].update(card_message);
+                if let Some(deck) = &mut self.deck {
+                    deck.cards[i].update(card_message);
+                }
 
                 Command::none()
             }
             Message::Skip => {
-                self.reviewing_id = (self.reviewing_id + 1).clamp(0, self.deck.cards.len());
+                if let Some(deck) = &self.deck {
+                    self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
+                }
 
                 Command::none()
             }
             Message::Reveal => {
-                if let Some(card) = self.deck.cards.get_mut(self.reviewing_id) {
-                    if card.revealed() {
-                        self.reviewing_id = (self.reviewing_id + 1).clamp(0, self.deck.cards.len());
-                    } else {
-                        card.update(CardMessage::Reveal);
+                if let Some(deck) = &mut self.deck {
+                    if let Some(card) = deck.cards.get_mut(self.reviewing_id) {
+                        if card.revealed() {
+                            self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
+                        } else {
+                            card.update(CardMessage::Reveal);
+                        }
                     }
                 }
 
                 Command::none()
             }
             Message::Rate(rating) => {
-                self.deck.cards[self.reviewing_id].schedule(self.fsrs, rating);
-                println!("{:?}", self.deck.cards[self.reviewing_id].log());
+                if let Some(deck) = &mut self.deck {
+                    deck.cards[self.reviewing_id].schedule(self.fsrs, rating);
+                    println!("{:?}", deck.cards[self.reviewing_id].log());
 
-                self.reviewing_id = (self.reviewing_id + 1).clamp(0, self.deck.cards.len());
+                    self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
+                }
 
                 Command::none()
             }
             Message::Continue => {
-                for card in &mut self.deck.cards {
-                    card.update(CardMessage::Hide);
-                }
+                if let Some(deck) = &mut self.deck {
+                    for card in &mut deck.cards {
+                        card.update(CardMessage::Hide);
+                    }
 
-                self.reviewing_id = 0;
+                    self.reviewing_id = 0;
+                }
 
                 Command::none()
             }
@@ -142,76 +159,81 @@ impl Application for App {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
-        let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
+        if let Some(deck) = &self.deck {
+            let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
+            let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
 
-        let progress_bar = progress_bar(
-            0.0..=(self.deck.cards.len() as f32),
-            self.reviewing_id as f32,
-        )
-        .height(15);
+            let progress_bar =
+                progress_bar(0.0..=(deck.cards.len() as f32), self.reviewing_id as f32).height(15);
 
-        let mut nunito_bold = Font::with_name("nunito");
-        nunito_bold.weight = Weight::Semibold;
+            let mut nunito_bold = Font::with_name("nunito");
+            nunito_bold.weight = Weight::Semibold;
 
-        let progress = text(format!("{} / {}", self.reviewing_id, self.deck.cards.len()))
-            .font(nunito_bold)
-            .size(20)
-            .style(theme::Text::Secondary);
+            let progress = text(format!("{} / {}", self.reviewing_id, deck.cards.len()))
+                .font(nunito_bold)
+                .size(20)
+                .style(theme::Text::Secondary);
 
-        let header = container(
-            row![cancel_icon, cog_icon, progress_bar, progress]
-                .align_items(Alignment::Center)
-                .spacing(15),
-        )
-        .width(Length::Fixed(1000.0))
-        .height(150)
-        .center_y();
-
-        let main_content: Element<_> = if self.reviewing_id == self.deck.cards.len() {
-            container(text("Congratulations!").size(50))
-                .width(Length::Fill)
-                .center_x()
-                .into()
-        } else {
-            self.deck.cards[self.reviewing_id]
-                .view()
-                .map(|message| Message::CardMessage(self.reviewing_id, message))
-        };
-
-        let main = container(main_content)
-            .width(Length::Fixed(1000.0))
-            .height(Length::Fill)
-            .center_y()
-            .padding([0, 125]);
-
-        let footer_content: Element<_> = if self.reviewing_id == self.deck.cards.len() {
-            let continue_button = action_btn("CONTINUE", theme::Button::Default, Message::Continue);
-
-            continue_button
-        } else if self.deck.cards[self.reviewing_id].revealed() {
-            let again_button = border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
-            let hard_button = border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
-            let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
-            let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
-
-            container(row![again_button, hard_button, good_button, easy_button].spacing(15)).into()
-        } else {
-            let skip_button = border_btn("SKIP", Message::Skip);
-            let reveal_button = action_btn("REVEAL", theme::Button::Default, Message::Reveal);
-
-            row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
-        };
-
-        let footer = container(footer_content)
+            let header = container(
+                row![cancel_icon, cog_icon, progress_bar, progress]
+                    .align_items(Alignment::Center)
+                    .spacing(15),
+            )
             .width(Length::Fixed(1000.0))
             .height(150)
-            .center_x()
             .center_y();
 
-        column![header, main, horizontal_rule(0), footer]
-            .align_items(Alignment::Center)
-            .into()
+            let main_content: Element<_> = if self.reviewing_id == deck.cards.len() {
+                container(text("Congratulations!").size(50))
+                    .width(Length::Fill)
+                    .center_x()
+                    .into()
+            } else {
+                deck.cards[self.reviewing_id]
+                    .view()
+                    .map(|message| Message::CardMessage(self.reviewing_id, message))
+            };
+
+            let main = container(main_content)
+                .width(Length::Fixed(1000.0))
+                .height(Length::Fill)
+                .center_y()
+                .padding([0, 125]);
+
+            let footer_content: Element<_> = if self.reviewing_id == deck.cards.len() {
+                let continue_button =
+                    action_btn("CONTINUE", theme::Button::Default, Message::Continue);
+
+                continue_button
+            } else if deck.cards[self.reviewing_id].revealed() {
+                let again_button =
+                    border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
+                let hard_button =
+                    border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
+                let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
+                let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
+
+                container(row![again_button, hard_button, good_button, easy_button].spacing(15))
+                    .into()
+            } else {
+                let skip_button = border_btn("SKIP", Message::Skip);
+                let reveal_button = action_btn("REVEAL", theme::Button::Default, Message::Reveal);
+
+                row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
+            };
+
+            let footer = container(footer_content)
+                .width(Length::Fixed(1000.0))
+                .height(150)
+                .center_x()
+                .center_y();
+
+            column![header, main, horizontal_rule(0), footer]
+                .align_items(Alignment::Center)
+                .into()
+        } else {
+            text("Loading deck...").style(theme::Text::Secondary).into()
+        }
     }
 }
 
