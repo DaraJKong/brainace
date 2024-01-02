@@ -2,7 +2,9 @@ mod reviewing;
 mod theme;
 mod widget;
 
-use std::fs;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::{fs, io};
 
 use iced::font::Weight;
 use iced::window::Mode;
@@ -31,6 +33,10 @@ pub struct App {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    Load,
+    Save,
+    DeckLoaded(Result<Arc<String>, Error>),
+    DeckSaved(Result<PathBuf, Error>),
     CardMessage(usize, CardMessage),
     Skip,
     Reveal,
@@ -68,6 +74,25 @@ impl Application for App {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::Load => Command::perform(
+                load_file("mathematical_constants.ron".into()),
+                Message::DeckLoaded,
+            ),
+            Message::Save => {
+                let text = ron::to_string(&self.deck).unwrap();
+
+                Command::perform(
+                    save_file(Some("mathematical_constants.ron".into()), text),
+                    Message::DeckSaved,
+                )
+            }
+            Message::DeckLoaded(Ok(content)) => {
+                self.deck = ron::from_str(content.as_str()).unwrap();
+
+                Command::none()
+            }
+            Message::DeckSaved(Ok(path)) => Command::none(),
+            Message::DeckLoaded(Err(error)) | Message::DeckSaved(Err(error)) => Command::none(),
             Message::CardMessage(i, CardMessage::Delete) => {
                 self.deck.cards.remove(i);
 
@@ -251,4 +276,49 @@ fn action_btn(action_text: &str, style: theme::Button, on_press: Message) -> Ele
     .padding([10, 50])
     .style(style)
     .into()
+}
+
+#[derive(Debug, Clone)]
+enum Error {
+    DialogClosed,
+    IOFailed(io::ErrorKind),
+}
+
+async fn pick_file() -> Result<Arc<String>, Error> {
+    let handle = rfd::AsyncFileDialog::new()
+        .set_title("Choose a file...")
+        .pick_file()
+        .await
+        .ok_or(Error::DialogClosed)?;
+
+    load_file(handle.path().to_owned()).await
+}
+
+async fn load_file(path: PathBuf) -> Result<Arc<String>, Error> {
+    let content = tokio::fs::read_to_string(&path)
+        .await
+        .map(Arc::new)
+        .map_err(|error| error.kind())
+        .map_err(Error::IOFailed)?;
+
+    Ok(content)
+}
+
+async fn save_file(path: Option<PathBuf>, text: String) -> Result<PathBuf, Error> {
+    let path = if let Some(path) = path {
+        path
+    } else {
+        rfd::AsyncFileDialog::new()
+            .set_title("Choose a file name...")
+            .save_file()
+            .await
+            .ok_or(Error::DialogClosed)
+            .map(|handle| handle.path().to_owned())?
+    };
+
+    tokio::fs::write(&path, text)
+        .await
+        .map_err(|error| Error::IOFailed(error.kind()))?;
+
+    Ok(path)
 }
