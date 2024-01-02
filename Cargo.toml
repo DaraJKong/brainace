@@ -9,9 +9,10 @@ description = "Spaced repetition app for efficient organization and mastery of k
 
 [dependencies]
 iced = { git = "https://github.com/iced-rs/iced" }
-fsrs = "0.1"
 chrono = "0.4"
+fsrs = "0.1"
 serde = "1.0"
+ron = "0.8"
 
 [patch.crates-io]
 fsrs = { git = "https://github.com/DaraJKong/rs-fsrs.git" }

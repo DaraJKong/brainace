@@ -2,6 +2,8 @@ mod reviewing;
 mod theme;
 mod widget;
 
+use std::fs;
+
 use iced::font::Weight;
 use iced::window::Mode;
 use reviewing::{Card, CardMessage, Deck};
@@ -47,16 +49,8 @@ impl Application for App {
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let fsrs = FSRS::default();
 
-        let mut deck = Deck::new("Mathematical Constants");
-
-        deck.add_card("The first five digits of Pi are [...]", "3.1415");
-        deck.add_card("Euler's number (constant e) is [...]", "2.718281828");
-        deck.add_card("The golden ratio (Phi) is [...]", "1.6180339887");
-        deck.add_card("The avogadro's constant is [...]", "6.02214076 x 10^23");
-        deck.add_card(
-            "The first five digits of the square root of 2 are [...]",
-            "1.4142",
-        );
+        let mathematical_constants = fs::read_to_string("mathematical_constants.ron").unwrap();
+        let deck = ron::from_str(&mathematical_constants).unwrap();
 
         (
             Self {
