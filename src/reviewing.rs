@@ -9,7 +9,9 @@ use iced::{
     widget::{button, column, container, horizontal_rule, horizontal_space, row, text},
     Alignment, Color, Length,
 };
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct Deck {
     name: String,
     pub cards: Vec<Card>,
@@ -34,9 +36,11 @@ impl Deck {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Card {
     front: String,
     back: String,
+    #[serde(skip)]
     state: CardState,
     fsrs: FSRSCard,
 }
