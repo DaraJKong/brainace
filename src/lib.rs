@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use iced::font::Weight;
-use reviewing::{CardMessage, Deck};
+use reviewing::{CardMessage, Deck, DeckMessage};
 use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
 use theme::Theme;
 use widget::Element;
@@ -35,6 +35,7 @@ pub enum Message {
     Save,
     DeckLoaded(Result<Arc<String>, Error>),
     DeckSaved(Result<PathBuf, Error>),
+    DeckMessage(DeckMessage),
     CardMessage(usize, CardMessage),
     Skip,
     Reveal,
@@ -117,6 +118,13 @@ impl Application for App {
             }
             Message::DeckSaved(Ok(path)) => Command::none(),
             Message::DeckLoaded(Err(error)) | Message::DeckSaved(Err(error)) => Command::none(),
+            Message::DeckMessage(deck_message) => {
+                if let Some(deck) = &mut self.deck {
+                    deck.update(deck_message);
+                };
+
+                Command::none()
+            }
             Message::CardMessage(i, CardMessage::Delete) => {
                 if let Some(deck) = &mut self.deck {
                     deck.cards.remove(i);
@@ -175,14 +183,22 @@ impl Application for App {
     }
 }
 
-fn manage_page<'a>(maybe_deck: Option<&Deck>) -> Element<'a, Message> {
-    let deck_info = maybe_deck.map_or_else(
+fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
+    let (deck_info, deck_cards) = maybe_deck.map_or_else(
         || {
-            text("no deck selected")
-                .size(20)
-                .style(theme::Text::Secondary)
+            (
+                text("No deck selected")
+                    .size(25)
+                    .style(theme::Text::Secondary),
+                container(""),
+            )
         },
-        |deck| text(deck.name()),
+        |deck| {
+            (
+                text(deck.name()).size(25),
+                container(deck.view().map(|message| Message::DeckMessage(message))),
+            )
+        },
     );
 
     let open_button = action_btn("OPEN", theme::Button::Default, Message::Open);
@@ -193,9 +209,19 @@ fn manage_page<'a>(maybe_deck: Option<&Deck>) -> Element<'a, Message> {
     );
 
     container(
-        row![deck_info, open_button, review_button]
+        column![
+            row![
+                deck_info,
+                horizontal_space(Length::Fill),
+                open_button,
+                review_button
+            ]
             .align_items(Alignment::Center)
             .spacing(15),
+            deck_cards
+        ]
+        .width(Length::Fixed(1000.0))
+        .spacing(20),
     )
     .width(Length::Fill)
     .height(Length::Fill)

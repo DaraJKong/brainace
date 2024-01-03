@@ -16,6 +16,12 @@ pub struct Deck {
     pub cards: Vec<Card>,
 }
 
+#[derive(Clone, Debug)]
+pub enum DeckMessage {
+    CardMessage(usize, CardMessage),
+    Edit(usize),
+}
+
 impl Deck {
     pub fn new(name: &str) -> Deck {
         Deck {
@@ -36,6 +42,29 @@ impl Deck {
 
     pub fn remove_card(&mut self, i: usize) {
         self.cards.remove(i);
+    }
+
+    pub fn update(&mut self, message: DeckMessage) {
+        match message {
+            DeckMessage::CardMessage(i, message) => {
+                self.cards[i].update(message);
+            }
+            DeckMessage::Edit(i) => {}
+        }
+    }
+
+    pub fn view(&self) -> Element<'_, DeckMessage> {
+        let cards = self
+            .cards
+            .iter()
+            .enumerate()
+            .map(|(i, card)| {
+                card.view()
+                    .map(move |message| DeckMessage::CardMessage(i, message))
+            })
+            .collect();
+
+        column(cards).spacing(10).into()
     }
 }
 
