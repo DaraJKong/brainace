@@ -13,8 +13,5 @@ chrono = "0.4"
 tokio = { version = "1.35", features = ["fs", "rt"] }
 serde = "1.0"
 ron = "0.8"
-fsrs = { version = "0.1", features = ["serde"] }
+fsrs = { git = "https://github.com/open-spaced-repetition/rs-fsrs.git", features = ["serde"] }
 rfd = "0.12"
-
-[patch.crates-io]
-fsrs = { path = "../rs-fsrs" }
