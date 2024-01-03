@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use iced::font::Weight;
-use iced::window::Mode;
 use reviewing::{CardMessage, Deck};
 use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
 use theme::Theme;
@@ -23,6 +22,7 @@ use iced::widget::{
 use iced::{executor, window, Alignment, Application, Color, Command, Font, Length};
 
 pub struct App {
+    mode: Mode,
     fsrs: FSRS,
     deck: Option<Deck>,
     reviewing_id: usize,
@@ -30,7 +30,8 @@ pub struct App {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Load,
+    ChangeMode(Mode),
+    Open,
     Save,
     DeckLoaded(Result<Arc<String>, Error>),
     DeckSaved(Result<PathBuf, Error>),
@@ -43,6 +44,12 @@ pub enum Message {
     Settings,
 }
 
+#[derive(Debug, Clone)]
+enum Mode {
+    Managing,
+    Reviewing,
+}
+
 impl Application for App {
     type Executor = executor::Default;
     type Message = Message;
@@ -52,16 +59,14 @@ impl Application for App {
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let fsrs = FSRS::default();
 
-        let batch = [
-            window::change_mode(window::Id::MAIN, Mode::Fullscreen),
-            Command::perform(
-                load_file("mathematical_constants.ron".into()),
-                Message::DeckLoaded,
-            ),
-        ];
+        let batch = [window::change_mode(
+            window::Id::MAIN,
+            window::Mode::Fullscreen,
+        )];
 
         (
             Self {
+                mode: Mode::Managing,
                 fsrs,
                 deck: None,
                 reviewing_id: 0,
@@ -76,10 +81,14 @@ impl Application for App {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::Load => Command::perform(
-                load_file("mathematical_constants.ron".into()),
-                Message::DeckLoaded,
-            ),
+            Message::ChangeMode(mode) => {
+                if !(matches!(mode, Mode::Reviewing) && self.deck.is_none()) {
+                    self.mode = mode;
+                }
+
+                Command::none()
+            }
+            Message::Open => Command::perform(pick_file(), Message::DeckLoaded),
             Message::Save => {
                 let text = ron::to_string(&self.deck).unwrap();
 
@@ -156,87 +165,104 @@ impl Application for App {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        self.deck.as_ref().map_or_else(
-            || text("Loading deck...").style(theme::Text::Secondary).into(),
-            |deck| {
-                let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
-                let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
-
-                let progress_bar =
-                    progress_bar(0.0..=(deck.cards.len() as f32), self.reviewing_id as f32)
-                        .height(15);
-
-                let mut nunito_bold = Font::with_name("nunito");
-                nunito_bold.weight = Weight::Semibold;
-
-                let progress = text(format!("{} / {}", self.reviewing_id, deck.cards.len()))
-                    .font(nunito_bold)
-                    .size(20)
-                    .style(theme::Text::Secondary);
-
-                let header = container(
-                    row![cancel_icon, cog_icon, progress_bar, progress]
-                        .align_items(Alignment::Center)
-                        .spacing(15),
-                )
-                .width(Length::Fixed(1000.0))
-                .height(150)
-                .center_y();
-
-                let main_content: Element<_> = if self.reviewing_id == deck.cards.len() {
-                    container(text("Congratulations!").size(50))
-                        .width(Length::Fill)
-                        .center_x()
-                        .into()
-                } else {
-                    deck.cards[self.reviewing_id]
-                        .view()
-                        .map(|message| Message::CardMessage(self.reviewing_id, message))
-                };
-
-                let main = container(main_content)
-                    .width(Length::Fixed(1000.0))
-                    .height(Length::Fill)
-                    .center_y()
-                    .padding([0, 125]);
-
-                let footer_content: Element<_> = if self.reviewing_id == deck.cards.len() {
-                    let continue_button =
-                        action_btn("CONTINUE", theme::Button::Default, Message::Continue);
-
-                    continue_button
-                } else if deck.cards[self.reviewing_id].revealed() {
-                    let again_button =
-                        border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
-                    let hard_button =
-                        border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
-                    let good_button =
-                        border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
-                    let easy_button =
-                        border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
-
-                    container(row![again_button, hard_button, good_button, easy_button].spacing(15))
-                        .into()
-                } else {
-                    let skip_button = border_btn("SKIP", Message::Skip);
-                    let reveal_button =
-                        action_btn("REVEAL", theme::Button::Default, Message::Reveal);
-
-                    row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
-                };
-
-                let footer = container(footer_content)
-                    .width(Length::Fixed(1000.0))
-                    .height(150)
-                    .center_x()
-                    .center_y();
-
-                column![header, main, horizontal_rule(0), footer]
-                    .align_items(Alignment::Center)
-                    .into()
-            },
-        )
+        match self.mode {
+            Mode::Managing => manage_page(self.deck.as_ref()),
+            Mode::Reviewing => review_page(self.deck.as_ref().unwrap(), self.reviewing_id),
+        }
     }
+}
+
+fn manage_page<'a>(maybe_deck: Option<&Deck>) -> Element<'a, Message> {
+    let deck_info = maybe_deck.map_or_else(
+        || {
+            text("no deck selected")
+                .size(20)
+                .style(theme::Text::Secondary)
+        },
+        |deck| text(deck.name()),
+    );
+
+    let open_button = action_btn("OPEN", theme::Button::Default, Message::Open);
+
+    container(
+        row![deck_info, open_button]
+            .align_items(Alignment::Center)
+            .spacing(15),
+    )
+    .width(Length::Fill)
+    .height(Length::Fill)
+    .center_x()
+    .center_y()
+    .into()
+}
+
+fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
+    let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
+    let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
+
+    let progress_bar = progress_bar(0.0..=(deck.cards.len() as f32), id as f32).height(15);
+
+    let mut nunito_bold = Font::with_name("nunito");
+    nunito_bold.weight = Weight::Semibold;
+
+    let progress = text(format!("{} / {}", id, deck.cards.len()))
+        .font(nunito_bold)
+        .size(20)
+        .style(theme::Text::Secondary);
+
+    let header = container(
+        row![cancel_icon, cog_icon, progress_bar, progress]
+            .align_items(Alignment::Center)
+            .spacing(15),
+    )
+    .width(Length::Fixed(1000.0))
+    .height(150)
+    .center_y();
+
+    let main_content: Element<_> = if id == deck.cards.len() {
+        container(text("Congratulations!").size(50))
+            .width(Length::Fill)
+            .center_x()
+            .into()
+    } else {
+        deck.cards[id]
+            .view()
+            .map(move |message| Message::CardMessage(id, message))
+    };
+
+    let main = container(main_content)
+        .width(Length::Fixed(1000.0))
+        .height(Length::Fill)
+        .center_y()
+        .padding([0, 125]);
+
+    let footer_content: Element<_> = if id == deck.cards.len() {
+        let continue_button = action_btn("CONTINUE", theme::Button::Default, Message::Continue);
+
+        continue_button
+    } else if deck.cards[id].revealed() {
+        let again_button = border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
+        let hard_button = border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
+        let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
+        let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
+
+        container(row![again_button, hard_button, good_button, easy_button].spacing(15)).into()
+    } else {
+        let skip_button = border_btn("SKIP", Message::Skip);
+        let reveal_button = action_btn("REVEAL", theme::Button::Default, Message::Reveal);
+
+        row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
+    };
+
+    let footer = container(footer_content)
+        .width(Length::Fixed(1000.0))
+        .height(150)
+        .center_x()
+        .center_y();
+
+    column![header, main, horizontal_rule(0), footer]
+        .align_items(Alignment::Center)
+        .into()
 }
 
 fn action(content: Element<'_, Message>, on_press: Option<Message>) -> Element<'_, Message> {

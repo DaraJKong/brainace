@@ -24,6 +24,10 @@ impl Deck {
         }
     }
 
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
     pub fn add_card(&mut self, front: &str, back: &str) {
         let card = Card::new(front, back);
 
