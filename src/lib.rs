@@ -82,8 +82,21 @@ impl Application for App {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::ChangeMode(mode) => {
-                if !(matches!(mode, Mode::Reviewing) && self.deck.is_none()) {
-                    self.mode = mode;
+                match mode {
+                    Mode::Managing => {
+                        self.mode = mode;
+                    }
+                    Mode::Reviewing => {
+                        if let Some(deck) = &mut self.deck {
+                            for card in &mut deck.cards {
+                                card.update(CardMessage::Hide);
+                            }
+
+                            self.reviewing_id = 0;
+
+                            self.mode = mode;
+                        }
+                    }
                 }
 
                 Command::none()
@@ -148,17 +161,7 @@ impl Application for App {
 
                 Command::none()
             }
-            Message::Continue => {
-                if let Some(deck) = &mut self.deck {
-                    for card in &mut deck.cards {
-                        card.update(CardMessage::Hide);
-                    }
-
-                    self.reviewing_id = 0;
-                }
-
-                Command::none()
-            }
+            Message::Continue => Command::none(),
             Message::Settings => Command::none(),
             Message::Close => window::close(window::Id::MAIN),
         }
@@ -242,7 +245,11 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
         .padding([0, 125]);
 
     let footer_content: Element<_> = if id == deck.cards.len() {
-        let continue_button = action_btn("CONTINUE", theme::Button::Default, Message::Continue);
+        let continue_button = action_btn(
+            "CONTINUE",
+            theme::Button::Default,
+            Message::ChangeMode(Mode::Managing),
+        );
 
         continue_button
     } else if deck.cards[id].revealed() {
