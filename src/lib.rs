@@ -183,9 +183,14 @@ fn manage_page<'a>(maybe_deck: Option<&Deck>) -> Element<'a, Message> {
     );
 
     let open_button = action_btn("OPEN", theme::Button::Default, Message::Open);
+    let review_button = action_btn(
+        "REVIEW",
+        theme::Button::Default,
+        Message::ChangeMode(Mode::Reviewing),
+    );
 
     container(
-        row![deck_info, open_button]
+        row![deck_info, open_button, review_button]
             .align_items(Alignment::Center)
             .spacing(15),
     )
