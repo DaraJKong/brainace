@@ -2,17 +2,14 @@ mod reviewing;
 mod theme;
 mod widget;
 
-use std::path::{Path, PathBuf};
+use std::io;
+use std::path::PathBuf;
 use std::sync::Arc;
-use std::{fs, io};
 
 use iced::font::Weight;
 use iced::window::Mode;
-use reviewing::{Card, CardMessage, Deck};
-use theme::palette::{
-    CYAN_300, CYAN_400, CYAN_500, GREEN_300, GREEN_400, GREEN_500, ROSE_300, ROSE_400, ROSE_500,
-    SKY_400, SKY_500, YELLOW_300, YELLOW_400, YELLOW_500,
-};
+use reviewing::{CardMessage, Deck};
+use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
 use theme::Theme;
 use widget::Element;
 
@@ -159,85 +156,90 @@ impl Application for App {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        if let Some(deck) = &self.deck {
-            let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
-            let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
+        self.deck.as_ref().map_or_else(
+            || text("Loading deck...").style(theme::Text::Secondary).into(),
+            |deck| {
+                let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
+                let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
 
-            let progress_bar =
-                progress_bar(0.0..=(deck.cards.len() as f32), self.reviewing_id as f32).height(15);
+                let progress_bar =
+                    progress_bar(0.0..=(deck.cards.len() as f32), self.reviewing_id as f32)
+                        .height(15);
 
-            let mut nunito_bold = Font::with_name("nunito");
-            nunito_bold.weight = Weight::Semibold;
+                let mut nunito_bold = Font::with_name("nunito");
+                nunito_bold.weight = Weight::Semibold;
 
-            let progress = text(format!("{} / {}", self.reviewing_id, deck.cards.len()))
-                .font(nunito_bold)
-                .size(20)
-                .style(theme::Text::Secondary);
+                let progress = text(format!("{} / {}", self.reviewing_id, deck.cards.len()))
+                    .font(nunito_bold)
+                    .size(20)
+                    .style(theme::Text::Secondary);
 
-            let header = container(
-                row![cancel_icon, cog_icon, progress_bar, progress]
-                    .align_items(Alignment::Center)
-                    .spacing(15),
-            )
-            .width(Length::Fixed(1000.0))
-            .height(150)
-            .center_y();
-
-            let main_content: Element<_> = if self.reviewing_id == deck.cards.len() {
-                container(text("Congratulations!").size(50))
-                    .width(Length::Fill)
-                    .center_x()
-                    .into()
-            } else {
-                deck.cards[self.reviewing_id]
-                    .view()
-                    .map(|message| Message::CardMessage(self.reviewing_id, message))
-            };
-
-            let main = container(main_content)
-                .width(Length::Fixed(1000.0))
-                .height(Length::Fill)
-                .center_y()
-                .padding([0, 125]);
-
-            let footer_content: Element<_> = if self.reviewing_id == deck.cards.len() {
-                let continue_button =
-                    action_btn("CONTINUE", theme::Button::Default, Message::Continue);
-
-                continue_button
-            } else if deck.cards[self.reviewing_id].revealed() {
-                let again_button =
-                    border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
-                let hard_button =
-                    border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
-                let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
-                let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
-
-                container(row![again_button, hard_button, good_button, easy_button].spacing(15))
-                    .into()
-            } else {
-                let skip_button = border_btn("SKIP", Message::Skip);
-                let reveal_button = action_btn("REVEAL", theme::Button::Default, Message::Reveal);
-
-                row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
-            };
-
-            let footer = container(footer_content)
+                let header = container(
+                    row![cancel_icon, cog_icon, progress_bar, progress]
+                        .align_items(Alignment::Center)
+                        .spacing(15),
+                )
                 .width(Length::Fixed(1000.0))
                 .height(150)
-                .center_x()
                 .center_y();
 
-            column![header, main, horizontal_rule(0), footer]
-                .align_items(Alignment::Center)
-                .into()
-        } else {
-            text("Loading deck...").style(theme::Text::Secondary).into()
-        }
+                let main_content: Element<_> = if self.reviewing_id == deck.cards.len() {
+                    container(text("Congratulations!").size(50))
+                        .width(Length::Fill)
+                        .center_x()
+                        .into()
+                } else {
+                    deck.cards[self.reviewing_id]
+                        .view()
+                        .map(|message| Message::CardMessage(self.reviewing_id, message))
+                };
+
+                let main = container(main_content)
+                    .width(Length::Fixed(1000.0))
+                    .height(Length::Fill)
+                    .center_y()
+                    .padding([0, 125]);
+
+                let footer_content: Element<_> = if self.reviewing_id == deck.cards.len() {
+                    let continue_button =
+                        action_btn("CONTINUE", theme::Button::Default, Message::Continue);
+
+                    continue_button
+                } else if deck.cards[self.reviewing_id].revealed() {
+                    let again_button =
+                        border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
+                    let hard_button =
+                        border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
+                    let good_button =
+                        border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
+                    let easy_button =
+                        border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
+
+                    container(row![again_button, hard_button, good_button, easy_button].spacing(15))
+                        .into()
+                } else {
+                    let skip_button = border_btn("SKIP", Message::Skip);
+                    let reveal_button =
+                        action_btn("REVEAL", theme::Button::Default, Message::Reveal);
+
+                    row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
+                };
+
+                let footer = container(footer_content)
+                    .width(Length::Fixed(1000.0))
+                    .height(150)
+                    .center_x()
+                    .center_y();
+
+                column![header, main, horizontal_rule(0), footer]
+                    .align_items(Alignment::Center)
+                    .into()
+            },
+        )
     }
 }
 
-fn action<'a>(content: Element<'a, Message>, on_press: Option<Message>) -> Element<'a, Message> {
+fn action(content: Element<'_, Message>, on_press: Option<Message>) -> Element<'_, Message> {
     button(content)
         .on_press_maybe(on_press)
         .style(theme::Button::Text)
@@ -301,7 +303,7 @@ fn action_btn(action_text: &str, style: theme::Button, on_press: Message) -> Ele
 }
 
 #[derive(Debug, Clone)]
-enum Error {
+pub enum Error {
     DialogClosed,
     IOFailed(io::ErrorKind),
 }

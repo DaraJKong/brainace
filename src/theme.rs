@@ -42,7 +42,7 @@ impl Default for Theme {
 impl application::StyleSheet for Theme {
     type Style = ();
 
-    fn appearance(&self, style: &Self::Style) -> application::Appearance {
+    fn appearance(&self, _style: &Self::Style) -> application::Appearance {
         application::Appearance {
             background_color: self.background,
             text_color: self.text,

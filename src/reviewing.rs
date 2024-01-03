@@ -5,9 +5,8 @@ use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
 use iced::{
-    alignment::Horizontal,
-    widget::{button, column, container, horizontal_rule, horizontal_space, row, text},
-    Alignment, Color, Length,
+    widget::{column, container, text},
+    Length,
 };
 use serde::{Deserialize, Serialize};
 
