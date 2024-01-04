@@ -1,11 +1,11 @@
 use std::fmt;
 
-use crate::{theme, widget::Element};
+use crate::{border_btn, icon_eye, icon_eye_off, theme, widget::Element};
 use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
 use iced::{
-    widget::{column, container, text},
+    widget::{column, container, row, text},
     Length,
 };
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ impl Deck {
             .iter()
             .enumerate()
             .map(|(i, card)| {
-                card.view()
+                card.edit_view()
                     .map(move |message| DeckMessage::CardMessage(i, message))
             })
             .collect();
@@ -154,6 +154,41 @@ impl Card {
             CardState::Hidden => container(front).padding([15, 25]).into(),
             CardState::Revealed => {
                 let front_container = container(front)
+                    .width(Length::Fill)
+                    .center_x()
+                    .padding([15, 25]);
+                let back_container = container(back)
+                    .width(Length::Fill)
+                    .center_x()
+                    .padding([15, 25])
+                    .style(theme::Container::BorderedFooter);
+
+                column![front_container, back_container].into()
+            }
+        };
+
+        container(content)
+            .width(Length::Fill)
+            .center_x()
+            .style(theme::Container::Bordered)
+            .into()
+    }
+
+    pub fn edit_view(&self) -> Element<CardMessage> {
+        let front = text(self.front.clone()).size(25);
+        let back = text(self.back.clone()).size(25).style(theme::Text::Accent);
+
+        let eye_button = match self.state {
+            CardState::Hidden => border_btn(icon_eye_off(25.0), CardMessage::Reveal),
+            CardState::Revealed => border_btn(icon_eye(25.0).into(), CardMessage::Hide),
+        };
+
+        let front_with_controls = row![front, eye_button.into()].spacing(15);
+
+        let content: Element<_> = match self.state {
+            CardState::Hidden => container(front_with_controls).padding([15, 25]).into(),
+            CardState::Revealed => {
+                let front_container = container(front_with_controls)
                     .width(Length::Fill)
                     .center_x()
                     .padding([15, 25]);

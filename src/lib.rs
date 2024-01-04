@@ -286,10 +286,15 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
 
         container(row![again_button, hard_button, good_button, easy_button].spacing(15)).into()
     } else {
-        let skip_button = border_btn("SKIP", Message::Skip);
+        let skip_button = border_btn(bold_text("SKIP"), Message::Skip);
         let reveal_button = action_btn("REVEAL", theme::Button::Default, Message::Reveal);
 
-        row![skip_button, horizontal_space(Length::Fill), reveal_button].into()
+        row![
+            skip_button.into(),
+            horizontal_space(Length::Fill),
+            reveal_button
+        ]
+        .into()
     };
 
     let footer = container(footer_content)
@@ -318,7 +323,15 @@ fn icon_cog<'a>(size: f32) -> Element<'a, Message> {
     icon('\u{E806}', size)
 }
 
-fn icon<'a>(codepoint: char, size: f32) -> Element<'a, Message> {
+fn icon_eye<'a, Msg>(size: f32) -> Element<'a, Msg> {
+    icon('\u{E807}', size)
+}
+
+fn icon_eye_off<'a, Msg>(size: f32) -> Element<'a, Msg> {
+    icon('\u{E808}', size)
+}
+
+fn icon<'a, Msg>(codepoint: char, size: f32) -> Element<'a, Msg> {
     const ICON_FONT: Font = Font::with_name("app-icons");
 
     text(codepoint)
@@ -328,15 +341,21 @@ fn icon<'a>(codepoint: char, size: f32) -> Element<'a, Message> {
         .into()
 }
 
-fn border_btn(button_text: &str, on_press: Message) -> Element<'_, Message> {
+fn bold_text(content: &str) -> Element<Message> {
     let mut nunito_bold = Font::with_name("nunito");
     nunito_bold.weight = Weight::Semibold;
 
-    button(text(button_text).font(nunito_bold).size(25))
+    text(content).font(nunito_bold).size(25).into()
+}
+
+fn border_btn<'a, Msg>(content: Element<'a, Msg>, on_press: Msg) -> impl Into<Element<'a, Msg>>
+where
+    Msg: 'a + Clone,
+{
+    button(content)
         .on_press(on_press)
         .padding([10, 50])
         .style(theme::Button::Bordered)
-        .into()
 }
 
 fn border_action_btn(button_text: &str, color: Color, on_press: Message) -> Element<'_, Message> {
