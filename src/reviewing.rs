@@ -88,6 +88,15 @@ impl Default for CardState {
     }
 }
 
+impl CardState {
+    fn toggle(&mut self) {
+        match self {
+            Self::Hidden => *self = Self::Revealed,
+            Self::Revealed => *self = Self::Hidden,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum CardMessage {
     Hide,
@@ -130,10 +139,7 @@ impl Card {
         match message {
             CardMessage::Hide => self.state = CardState::Hidden,
             CardMessage::Reveal => self.state = CardState::Revealed,
-            CardMessage::ToggleState => match self.state {
-                CardState::Hidden => self.state = CardState::Revealed,
-                CardState::Revealed => self.state = CardState::Hidden,
-            },
+            CardMessage::ToggleState => self.state.toggle(),
             CardMessage::FrontChanged(content) => self.front = content,
             CardMessage::BackChanged(content) => self.back = content,
             _ => {}
