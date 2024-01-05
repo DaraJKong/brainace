@@ -323,15 +323,15 @@ fn icon_cog<'a>(size: f32) -> Element<'a, Message> {
     icon('\u{E806}', size)
 }
 
-fn icon_eye<'a, Msg>(size: f32) -> Element<'a, Msg> {
+fn icon_eye<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E807}', size)
 }
 
-fn icon_eye_off<'a, Msg>(size: f32) -> Element<'a, Msg> {
+fn icon_eye_off<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E808}', size)
 }
 
-fn icon<'a, Msg>(codepoint: char, size: f32) -> Element<'a, Msg> {
+fn icon<'a, Msg: 'a>(codepoint: char, size: f32) -> Element<'a, Msg> {
     const ICON_FONT: Font = Font::with_name("app-icons");
 
     text(codepoint)
@@ -348,13 +348,22 @@ fn bold_text(content: &str) -> Element<Message> {
     text(content).font(nunito_bold).size(25).into()
 }
 
-fn border_btn<'a, Msg>(content: Element<'a, Msg>, on_press: Msg) -> impl Into<Element<'a, Msg>>
-where
-    Msg: 'a + Clone,
-{
+fn border_btn<'a, Msg: 'a + Clone>(
+    content: Element<'a, Msg>,
+    on_press: Msg,
+) -> impl Into<Element<'a, Msg>> {
     button(content)
         .on_press(on_press)
         .padding([10, 50])
+        .style(theme::Button::Bordered)
+}
+
+fn icon_btn<'a, Msg: 'a + Clone>(
+    content: Element<'a, Msg>,
+    on_press_maybe: Option<Msg>,
+) -> impl Into<Element<'a, Msg>> {
+    button(content)
+        .on_press_maybe(on_press_maybe)
         .style(theme::Button::Bordered)
 }
 

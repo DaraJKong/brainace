@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{border_btn, icon_eye, icon_eye_off, theme, widget::Element};
+use crate::{icon_btn, icon_eye, icon_eye_off, theme, widget::Element};
 use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
@@ -179,8 +179,8 @@ impl Card {
         let back = text(self.back.clone()).size(25).style(theme::Text::Accent);
 
         let eye_button = match self.state {
-            CardState::Hidden => border_btn(icon_eye_off(25.0), CardMessage::Reveal),
-            CardState::Revealed => border_btn(icon_eye(25.0).into(), CardMessage::Hide),
+            CardState::Hidden => icon_btn(icon_eye_off(20.0), Some(CardMessage::Reveal)),
+            CardState::Revealed => icon_btn(icon_eye(20.0), Some(CardMessage::Hide)),
         };
 
         let front_with_controls = row![front, eye_button.into()].spacing(15);
