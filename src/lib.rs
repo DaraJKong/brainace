@@ -308,18 +308,21 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
         .into()
 }
 
-fn action(content: Element<'_, Message>, on_press: Option<Message>) -> Element<'_, Message> {
+fn action<'a, Msg: 'a + Clone>(
+    content: Element<'a, Msg>,
+    on_press: Option<Msg>,
+) -> Element<'a, Msg> {
     button(content)
         .on_press_maybe(on_press)
         .style(theme::Button::Text)
         .into()
 }
 
-fn icon_cancel<'a>(size: f32) -> Element<'a, Message> {
+fn icon_cancel<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E804}', size)
 }
 
-fn icon_cog<'a>(size: f32) -> Element<'a, Message> {
+fn icon_cog<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E806}', size)
 }
 
@@ -347,7 +350,7 @@ fn icon<'a, Msg: 'a>(codepoint: char, size: f32) -> Element<'a, Msg> {
     .into()
 }
 
-fn bold_text(content: &str) -> Element<Message> {
+fn bold_text<Msg>(content: &str) -> Element<Msg> {
     let mut nunito_bold = Font::with_name("nunito");
     nunito_bold.weight = Weight::Semibold;
 
@@ -373,7 +376,11 @@ fn icon_btn<'a, Msg: 'a + Clone>(
         .style(theme::Button::Bordered)
 }
 
-fn border_action_btn(button_text: &str, color: Color, on_press: Message) -> Element<'_, Message> {
+fn border_action_btn<'a, Msg: 'a + Clone>(
+    button_text: &str,
+    color: Color,
+    on_press: Msg,
+) -> Element<'a, Msg> {
     let mut nunito_bold = Font::with_name("nunito");
     nunito_bold.weight = Weight::Semibold;
 
@@ -384,7 +391,11 @@ fn border_action_btn(button_text: &str, color: Color, on_press: Message) -> Elem
         .into()
 }
 
-fn action_btn(action_text: &str, style: theme::Button, on_press: Message) -> Element<'_, Message> {
+fn action_btn<'a, Msg: 'a + Clone>(
+    action_text: &str,
+    style: theme::Button,
+    on_press: Msg,
+) -> Element<'a, Msg> {
     let mut nunito_bold = Font::with_name("nunito");
     nunito_bold.weight = Weight::Semibold;
 
