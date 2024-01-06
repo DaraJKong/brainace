@@ -18,8 +18,8 @@ pub struct Deck {
 
 #[derive(Clone, Debug)]
 pub enum DeckMessage {
+    NewCard,
     CardMessage(usize, CardMessage),
-    Edit(usize),
 }
 
 impl Deck {
@@ -40,16 +40,18 @@ impl Deck {
         self.cards.push(card);
     }
 
-    pub fn remove_card(&mut self, i: usize) {
-        self.cards.remove(i);
-    }
-
     pub fn update(&mut self, message: DeckMessage) {
         match message {
-            DeckMessage::CardMessage(i, message) => {
-                self.cards[i].update(message);
-            }
-            DeckMessage::Edit(i) => {}
+            DeckMessage::NewCard => {}
+            DeckMessage::CardMessage(i, message) => match message {
+                CardMessage::Edit => {}
+                CardMessage::Delete => {
+                    self.cards.remove(i);
+                }
+                _ => {
+                    self.cards[i].update(message);
+                }
+            },
         }
     }
 
