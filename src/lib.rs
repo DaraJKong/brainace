@@ -334,11 +334,17 @@ fn icon_eye_off<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
 fn icon<'a, Msg: 'a>(codepoint: char, size: f32) -> Element<'a, Msg> {
     const ICON_FONT: Font = Font::with_name("app-icons");
 
-    text(codepoint)
-        .font(ICON_FONT)
-        .size(size)
-        .style(theme::Text::Secondary)
-        .into()
+    container(
+        text(codepoint)
+            .font(ICON_FONT)
+            .size(size)
+            .style(theme::Text::Secondary),
+    )
+    .height(Length::Fixed(size * 1.3))
+    .width(Length::Fixed(size * 1.3))
+    .center_x()
+    .center_y()
+    .into()
 }
 
 fn bold_text(content: &str) -> Element<Message> {
