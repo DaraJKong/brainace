@@ -1,11 +1,11 @@
 use std::fmt;
 
-use crate::{icon_btn, icon_eye, icon_eye_off, theme, widget::Element};
+use crate::{icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_trash, theme, widget::Element};
 use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
 use iced::{
-    widget::{column, container, row, text},
+    widget::{column, container, horizontal_space, row, text},
     Length,
 };
 use serde::{Deserialize, Serialize};
@@ -182,8 +182,17 @@ impl Card {
             CardState::Hidden => icon_btn(icon_eye_off(20.0), Some(CardMessage::Reveal)),
             CardState::Revealed => icon_btn(icon_eye(20.0), Some(CardMessage::Hide)),
         };
+        let edit_button = icon_btn(icon_pencil(20.0), Some(CardMessage::Edit));
+        let trash_button = icon_btn(icon_trash(20.0), Some(CardMessage::Delete));
 
-        let front_with_controls = row![front, eye_button.into()].spacing(15);
+        let front_with_controls = row![
+            front,
+            horizontal_space(Length::Fill),
+            eye_button.into(),
+            edit_button.into(),
+            trash_button.into()
+        ]
+        .spacing(5);
 
         let content: Element<_> = match self.state {
             CardState::Hidden => container(front_with_controls).padding([15, 25]).into(),

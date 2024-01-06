@@ -334,6 +334,14 @@ fn icon_eye_off<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E808}', size)
 }
 
+fn icon_pencil<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
+    icon('\u{E813}', size)
+}
+
+fn icon_trash<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
+    icon('\u{E800}', size)
+}
+
 fn icon<'a, Msg: 'a>(codepoint: char, size: f32) -> Element<'a, Msg> {
     const ICON_FONT: Font = Font::with_name("app-icons");
 
