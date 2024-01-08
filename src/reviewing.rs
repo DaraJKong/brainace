@@ -14,6 +14,10 @@ use serde::{Deserialize, Serialize};
 pub struct Deck {
     name: String,
     pub cards: Vec<Card>,
+    #[serde(skip)]
+    pub front_content: String,
+    #[serde(skip)]
+    pub back_content: String,
 }
 
 #[derive(Clone, Debug)]
@@ -27,6 +31,8 @@ impl Deck {
         Deck {
             name: name.to_string(),
             cards: Vec::new(),
+            front_content: String::new(),
+            back_content: String::new(),
         }
     }
 

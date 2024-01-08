@@ -1,3 +1,5 @@
+pub mod modal;
+
 use crate::theme::Theme;
 
 pub type Renderer = iced::Renderer<Theme>;

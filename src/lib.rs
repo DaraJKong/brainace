@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use iced::font::Weight;
-use reviewing::{CardMessage, Deck, DeckMessage};
+use reviewing::{Card, CardMessage, Deck, DeckMessage};
 use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
 use theme::Theme;
 use widget::Element;
@@ -17,9 +17,10 @@ use fsrs::{Rating, FSRS};
 
 use iced::widget::{
     button, column, container, horizontal_rule, horizontal_space, progress_bar, row, text,
-    text_editor,
+    text_editor, text_input,
 };
 use iced::{executor, window, Alignment, Application, Color, Command, Font, Length};
+use widget::modal::Modal;
 
 pub struct App {
     mode: Mode,
@@ -176,10 +177,17 @@ impl Application for App {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        match self.mode {
+        let page = match self.mode {
             Mode::Managing => manage_page(self.deck.as_ref()),
             Mode::Reviewing => review_page(self.deck.as_ref().unwrap(), self.reviewing_id),
-        }
+        };
+
+        let modal: Element<_> = self.deck.as_ref().map_or_else(
+            || "".into(),
+            |deck| card_editor(&deck.front_content, &deck.back_content),
+        );
+
+        Modal::new(page, modal).into()
     }
 }
 
@@ -306,6 +314,13 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
     column![header, main, horizontal_rule(0), footer]
         .align_items(Alignment::Center)
         .into()
+}
+
+fn card_editor<'a, Msg: 'a + Clone>(front: &str, back: &str) -> Element<'a, Msg> {
+    let front_input = text_input("Front", front);
+    let back_input = text_input("Back", back);
+
+    column![front_input, back_input].into()
 }
 
 fn action<'a, Msg: 'a + Clone>(

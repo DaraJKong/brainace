@@ -5,7 +5,7 @@ use iced::{
     widget::{
         button, container, progress_bar,
         rule::{self, FillMode},
-        text,
+        text, text_input,
     },
     BorderRadius, Color,
 };
@@ -212,6 +212,55 @@ impl button::StyleSheet for Theme {
                 text_color: self.surface,
                 ..active
             },
+        }
+    }
+}
+
+impl text_input::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, style: &Self::Style) -> text_input::Appearance {
+        text_input::Appearance {
+            background: self.background.into(),
+            border_radius: 10.0.into(),
+            border_width: 2.0,
+            border_color: self.border,
+            icon_color: self.accent,
+        }
+    }
+
+    fn focused(&self, style: &Self::Style) -> text_input::Appearance {
+        let active = self.active(style);
+
+        text_input::Appearance {
+            background: self.surface.into(),
+            border_color: self.accent,
+            ..active
+        }
+    }
+
+    fn placeholder_color(&self, style: &Self::Style) -> Color {
+        self.border
+    }
+
+    fn value_color(&self, style: &Self::Style) -> Color {
+        self.accent
+    }
+
+    fn disabled_color(&self, style: &Self::Style) -> Color {
+        self.surface
+    }
+
+    fn selection_color(&self, style: &Self::Style) -> Color {
+        self.border
+    }
+
+    fn disabled(&self, style: &Self::Style) -> text_input::Appearance {
+        let active = self.active(style);
+
+        text_input::Appearance {
+            border_color: self.surface,
+            ..active
         }
     }
 }
