@@ -5,7 +5,7 @@ use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
 use iced::{
-    widget::{column, container, horizontal_space, row, text},
+    widget::{column, container, horizontal_space, row, text, text_input},
     Length,
 };
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,8 @@ pub struct Deck {
 pub enum DeckMessage {
     NewCard,
     CardMessage(usize, CardMessage),
+    FrontChanged(String),
+    BackChanged(String),
 }
 
 impl Deck {
@@ -57,6 +59,12 @@ impl Deck {
                     self.cards[i].update(message);
                 }
             },
+            DeckMessage::FrontChanged(content) => {
+                self.front_content = content;
+            }
+            DeckMessage::BackChanged(content) => {
+                self.back_content = content;
+            }
         }
     }
 
@@ -72,6 +80,14 @@ impl Deck {
             .collect();
 
         column(cards).spacing(10).into()
+    }
+
+    pub fn card_editor(&self) -> Element<DeckMessage> {
+        let front_input =
+            text_input("Front", &self.front_content).on_input(DeckMessage::FrontChanged);
+        let back_input = text_input("Back", &self.back_content).on_input(DeckMessage::BackChanged);
+
+        column![front_input, back_input].into()
     }
 }
 

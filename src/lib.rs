@@ -17,7 +17,7 @@ use fsrs::{Rating, FSRS};
 
 use iced::widget::{
     button, column, container, horizontal_rule, horizontal_space, progress_bar, row, text,
-    text_editor, text_input,
+    text_editor,
 };
 use iced::{executor, window, Alignment, Application, Color, Command, Font, Length};
 use widget::modal::Modal;
@@ -199,7 +199,7 @@ impl Application for App {
 
         let modal: Element<_> = self.deck.as_ref().map_or_else(
             || "".into(),
-            |deck| card_editor(&deck.front_content, &deck.back_content),
+            |deck| deck.card_editor().map(Message::DeckMessage),
         );
 
         if self.show_modal {
@@ -333,13 +333,6 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
     column![header, main, horizontal_rule(0), footer]
         .align_items(Alignment::Center)
         .into()
-}
-
-fn card_editor<'a, Msg: 'a + Clone>(front: &str, back: &str) -> Element<'a, Msg> {
-    let front_input = text_input("Front", front);
-    let back_input = text_input("Back", back);
-
-    column![front_input, back_input].into()
 }
 
 fn action<'a, Msg: 'a + Clone>(
