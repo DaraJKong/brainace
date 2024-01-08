@@ -50,7 +50,6 @@ impl Deck {
         match message {
             DeckMessage::NewCard => {}
             DeckMessage::CardMessage(i, message) => match message {
-                CardMessage::Edit => {}
                 CardMessage::Delete => {
                     self.cards.remove(i);
                 }
@@ -124,6 +123,14 @@ impl Card {
             state: CardState::default(),
             fsrs: FSRSCard::new(),
         }
+    }
+
+    pub fn front(&self) -> String {
+        self.front.clone()
+    }
+
+    pub fn back(&self) -> String {
+        self.back.clone()
     }
 
     pub const fn revealed(&self) -> bool {

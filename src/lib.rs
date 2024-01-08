@@ -23,6 +23,7 @@ use iced::{executor, window, Alignment, Application, Color, Command, Font, Lengt
 use widget::modal::Modal;
 
 pub struct App {
+    show_modal: bool,
     mode: Mode,
     fsrs: FSRS,
     deck: Option<Deck>,
@@ -31,6 +32,8 @@ pub struct App {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    ShowModal,
+    HideModal,
     ChangeMode(Mode),
     Open,
     Save,
@@ -68,6 +71,7 @@ impl Application for App {
 
         (
             Self {
+                show_modal: false,
                 mode: Mode::Managing,
                 fsrs,
                 deck: None,
@@ -83,6 +87,14 @@ impl Application for App {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::ShowModal => {
+                self.show_modal = true;
+                Command::none()
+            }
+            Message::HideModal => {
+                self.show_modal = false;
+                Command::none()
+            }
             Message::ChangeMode(mode) => {
                 match mode {
                     Mode::Managing => {
@@ -121,15 +133,18 @@ impl Application for App {
             Message::DeckLoaded(Err(error)) | Message::DeckSaved(Err(error)) => Command::none(),
             Message::DeckMessage(deck_message) => {
                 if let Some(deck) = &mut self.deck {
-                    deck.update(deck_message);
-                };
+                    match deck_message {
+                        DeckMessage::CardMessage(i, CardMessage::Edit) => {
+                            deck.front_content = deck.cards[i].front();
+                            deck.back_content = deck.cards[i].back();
 
-                Command::none()
-            }
-            Message::CardMessage(i, CardMessage::Delete) => {
-                if let Some(deck) = &mut self.deck {
-                    deck.cards.remove(i);
-                }
+                            self.show_modal = true;
+                        }
+                        _ => {
+                            deck.update(deck_message);
+                        }
+                    }
+                };
 
                 Command::none()
             }
@@ -187,7 +202,11 @@ impl Application for App {
             |deck| card_editor(&deck.front_content, &deck.back_content),
         );
 
-        Modal::new(page, modal).into()
+        if self.show_modal {
+            Modal::new(page, modal).on_blur(Message::HideModal).into()
+        } else {
+            page
+        }
     }
 }
 
