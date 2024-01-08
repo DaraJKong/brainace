@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::{icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_trash, theme, widget::Element};
+use crate::{
+    action_btn, border_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_trash, theme,
+    widget::Element,
+};
 use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
@@ -15,9 +18,11 @@ pub struct Deck {
     name: String,
     pub cards: Vec<Card>,
     #[serde(skip)]
-    pub front_content: String,
+    editing_id: usize,
     #[serde(skip)]
-    pub back_content: String,
+    front_content: String,
+    #[serde(skip)]
+    back_content: String,
 }
 
 #[derive(Clone, Debug)]
@@ -26,6 +31,8 @@ pub enum DeckMessage {
     CardMessage(usize, CardMessage),
     FrontChanged(String),
     BackChanged(String),
+    CancelEdit,
+    ConfirmEdit,
 }
 
 impl Deck {
@@ -33,6 +40,7 @@ impl Deck {
         Deck {
             name: name.to_string(),
             cards: Vec::new(),
+            editing_id: 0,
             front_content: String::new(),
             back_content: String::new(),
         }
@@ -52,6 +60,11 @@ impl Deck {
         match message {
             DeckMessage::NewCard => {}
             DeckMessage::CardMessage(i, message) => match message {
+                CardMessage::Edit => {
+                    self.editing_id = i;
+                    self.front_content = self.cards[i].front();
+                    self.back_content = self.cards[i].back();
+                }
                 CardMessage::Delete => {
                     self.cards.remove(i);
                 }
@@ -64,6 +77,15 @@ impl Deck {
             }
             DeckMessage::BackChanged(content) => {
                 self.back_content = content;
+            }
+            DeckMessage::CancelEdit => {
+                self.editing_id = 0;
+                self.front_content = String::new();
+                self.back_content = String::new();
+            }
+            DeckMessage::ConfirmEdit => {
+                self.cards[self.editing_id].front = self.front_content.clone();
+                self.cards[self.editing_id].back = self.back_content.clone();
             }
         }
     }
@@ -87,7 +109,15 @@ impl Deck {
             text_input("Front", &self.front_content).on_input(DeckMessage::FrontChanged);
         let back_input = text_input("Back", &self.back_content).on_input(DeckMessage::BackChanged);
 
-        column![front_input, back_input].into()
+        let cancel_button = border_btn("CANCEL".into(), DeckMessage::CancelEdit);
+        let ok_button = action_btn("OK", theme::Button::Default, DeckMessage::ConfirmEdit);
+
+        column![
+            front_input,
+            back_input,
+            row![cancel_button.into(), ok_button]
+        ]
+        .into()
     }
 }
 

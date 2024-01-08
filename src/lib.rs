@@ -134,11 +134,13 @@ impl Application for App {
             Message::DeckMessage(deck_message) => {
                 if let Some(deck) = &mut self.deck {
                     match deck_message {
-                        DeckMessage::CardMessage(i, CardMessage::Edit) => {
-                            deck.front_content = deck.cards[i].front();
-                            deck.back_content = deck.cards[i].back();
-
+                        DeckMessage::CardMessage(_, CardMessage::Edit) => {
+                            deck.update(deck_message);
                             self.show_modal = true;
+                        }
+                        DeckMessage::CancelEdit | DeckMessage::ConfirmEdit => {
+                            deck.update(deck_message);
+                            self.show_modal = false;
                         }
                         _ => {
                             deck.update(deck_message);
