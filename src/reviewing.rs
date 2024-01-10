@@ -8,8 +8,9 @@ use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
 use fsrs::{Rating, FSRS};
 use iced::{
+    font::Weight,
     widget::{column, container, horizontal_space, row, text, text_input},
-    Length,
+    Alignment, Font, Length,
 };
 use serde::{Deserialize, Serialize};
 
@@ -105,18 +106,33 @@ impl Deck {
     }
 
     pub fn card_editor(&self) -> Element<DeckMessage> {
-        let front_input =
-            text_input("Front", &self.front_content).on_input(DeckMessage::FrontChanged);
-        let back_input = text_input("Back", &self.back_content).on_input(DeckMessage::BackChanged);
+        let front_input = text_input("Front", &self.front_content)
+            .on_input(DeckMessage::FrontChanged)
+            .size(25);
+        let back_input = text_input("Back", &self.back_content)
+            .on_input(DeckMessage::BackChanged)
+            .size(25);
 
-        let cancel_button = border_btn("CANCEL".into(), DeckMessage::CancelEdit);
+        let mut nunito_bold = Font::with_name("nunito");
+        nunito_bold.weight = Weight::Semibold;
+
+        let cancel_text = text("CANCEL").font(nunito_bold).size(25);
+
+        let cancel_button = border_btn(cancel_text.into(), DeckMessage::CancelEdit);
         let ok_button = action_btn("OK", theme::Button::Default, DeckMessage::ConfirmEdit);
 
-        column![
-            front_input,
-            back_input,
-            row![cancel_button.into(), ok_button]
-        ]
+        container(
+            column![
+                front_input,
+                back_input,
+                row![cancel_button.into(), ok_button].spacing(15)
+            ]
+            .align_items(Alignment::Center)
+            .spacing(15)
+            .padding(50),
+        )
+        .width(Length::Fixed(850.0))
+        .style(theme::Container::Modal)
         .into()
     }
 }

@@ -87,6 +87,7 @@ pub enum Container {
     Surface,
     Bordered,
     BorderedFooter,
+    Modal,
 }
 
 impl container::StyleSheet for Theme {
@@ -112,6 +113,13 @@ impl container::StyleSheet for Theme {
                 border_radius: [0.0, 0.0, 10.0, 10.0].into(),
                 border_width: 2.0,
                 border_color: self.surface,
+            },
+            Container::Modal => container::Appearance {
+                background: Some(self.background.into()),
+                border_radius: 20.0.into(),
+                border_width: 2.0,
+                border_color: self.surface,
+                ..Default::default()
             },
         }
     }
@@ -244,7 +252,7 @@ impl text_input::StyleSheet for Theme {
     }
 
     fn value_color(&self, style: &Self::Style) -> Color {
-        self.accent
+        self.text
     }
 
     fn disabled_color(&self, style: &Self::Style) -> Color {
@@ -252,7 +260,7 @@ impl text_input::StyleSheet for Theme {
     }
 
     fn selection_color(&self, style: &Self::Style) -> Color {
-        self.border
+        self.hover
     }
 
     fn disabled(&self, style: &Self::Style) -> text_input::Appearance {
