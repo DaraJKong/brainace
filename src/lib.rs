@@ -224,8 +224,8 @@ fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
         },
         |deck| {
             (
-                text(deck.name()).size(25),
-                container(deck.view().map(|message| Message::DeckMessage(message))),
+                text("Deck loaded").size(25).style(theme::Text::Secondary),
+                container(deck.view().map(Message::DeckMessage)),
             )
         },
     );
@@ -369,6 +369,10 @@ fn icon_pencil<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
 
 fn icon_trash<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
     icon('\u{E800}', size)
+}
+
+fn icon_plus<'a, Msg: 'a>(size: f32) -> Element<'a, Msg> {
+    icon('\u{E805}', size)
 }
 
 fn icon<'a, Msg: 'a>(codepoint: char, size: f32) -> Element<'a, Msg> {

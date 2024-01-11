@@ -1,8 +1,8 @@
 use std::fmt;
 
 use crate::{
-    action_btn, border_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_trash, theme,
-    widget::Element,
+    action, action_btn, border_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_plus,
+    icon_trash, theme, widget::Element,
 };
 use chrono::Utc;
 pub use fsrs::Card as FSRSCard;
@@ -51,20 +51,23 @@ impl Deck {
         self.name.clone()
     }
 
-    pub fn add_card(&mut self, front: &str, back: &str) {
-        let card = Card::new(front, back);
-
-        self.cards.push(card);
+    fn edit(&mut self, id: usize) {
+        self.editing_id = id;
+        self.front_content = self.cards[id].front();
+        self.back_content = self.cards[id].back();
     }
 
     pub fn update(&mut self, message: DeckMessage) {
         match message {
-            DeckMessage::NewCard => {}
+            DeckMessage::NewCard => {
+                let card = Card::new();
+
+                self.cards.push(card);
+                self.edit(self.cards.len() - 1);
+            }
             DeckMessage::CardMessage(i, message) => match message {
                 CardMessage::Edit => {
-                    self.editing_id = i;
-                    self.front_content = self.cards[i].front();
-                    self.back_content = self.cards[i].back();
+                    self.edit(i);
                 }
                 CardMessage::Delete => {
                     self.cards.remove(i);
@@ -79,11 +82,7 @@ impl Deck {
             DeckMessage::BackChanged(content) => {
                 self.back_content = content;
             }
-            DeckMessage::CancelEdit => {
-                self.editing_id = 0;
-                self.front_content = String::new();
-                self.back_content = String::new();
-            }
+            DeckMessage::CancelEdit => {}
             DeckMessage::ConfirmEdit => {
                 self.cards[self.editing_id].front = self.front_content.clone();
                 self.cards[self.editing_id].back = self.back_content.clone();
@@ -92,6 +91,11 @@ impl Deck {
     }
 
     pub fn view(&self) -> Element<'_, DeckMessage> {
+        let deck_name = text(self.name()).size(25);
+        let plus_button = action(icon_plus(25.0), Some(DeckMessage::NewCard));
+
+        let controls = row![deck_name, horizontal_space(Length::Fill), plus_button];
+
         let cards = self
             .cards
             .iter()
@@ -102,7 +106,7 @@ impl Deck {
             })
             .collect();
 
-        column(cards).spacing(10).into()
+        column![controls, column(cards)].spacing(10).into()
     }
 
     pub fn card_editor(&self) -> Element<DeckMessage> {
@@ -178,10 +182,10 @@ pub enum CardMessage {
 }
 
 impl Card {
-    pub fn new(front: &str, back: &str) -> Self {
+    pub fn new() -> Self {
         Self {
-            front: front.to_string(),
-            back: back.to_string(),
+            front: String::new(),
+            back: String::new(),
             state: CardState::default(),
             fsrs: FSRSCard::new(),
         }
