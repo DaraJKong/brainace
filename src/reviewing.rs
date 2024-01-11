@@ -106,7 +106,9 @@ impl Deck {
             })
             .collect();
 
-        column![controls, column(cards)].spacing(10).into()
+        column![controls, column(cards).spacing(10)]
+            .spacing(15)
+            .into()
     }
 
     pub fn card_editor(&self) -> Element<DeckMessage> {
