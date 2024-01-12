@@ -134,7 +134,7 @@ impl Application for App {
             Message::DeckMessage(deck_message) => {
                 if let Some(deck) = &mut self.deck {
                     match deck_message {
-                        DeckMessage::CardMessage(_, CardMessage::Edit) => {
+                        DeckMessage::CardMessage(_, CardMessage::Edit) | DeckMessage::NewCard => {
                             deck.update(deck_message);
                             self.show_modal = true;
                         }

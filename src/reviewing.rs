@@ -61,9 +61,10 @@ impl Deck {
         match message {
             DeckMessage::NewCard => {
                 let card = Card::new();
-
                 self.cards.push(card);
-                self.edit(self.cards.len() - 1);
+
+                let last_id = self.cards.len() - 1;
+                self.edit(last_id);
             }
             DeckMessage::CardMessage(i, message) => match message {
                 CardMessage::Edit => {
