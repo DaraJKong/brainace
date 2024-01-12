@@ -19,6 +19,8 @@ pub struct Deck {
     name: String,
     pub cards: Vec<Card>,
     #[serde(skip)]
+    editing_name: bool,
+    #[serde(skip)]
     editing_id: usize,
     #[serde(skip)]
     front_content: String,
@@ -29,6 +31,9 @@ pub struct Deck {
 #[derive(Clone, Debug)]
 pub enum DeckMessage {
     NewCard,
+    EditName,
+    NameChanged(String),
+    FinishEditName,
     CardMessage(usize, CardMessage),
     FrontChanged(String),
     BackChanged(String),
@@ -41,6 +46,7 @@ impl Deck {
         Deck {
             name: name.to_string(),
             cards: Vec::new(),
+            editing_name: false,
             editing_id: 0,
             front_content: String::new(),
             back_content: String::new(),
@@ -65,6 +71,15 @@ impl Deck {
 
                 let last_id = self.cards.len() - 1;
                 self.edit(last_id);
+            }
+            DeckMessage::EditName => {
+                self.editing_name = true;
+            }
+            DeckMessage::NameChanged(content) => {
+                self.name = content;
+            }
+            DeckMessage::FinishEditName => {
+                self.editing_name = false;
             }
             DeckMessage::CardMessage(i, message) => match message {
                 CardMessage::Edit => {
@@ -92,10 +107,25 @@ impl Deck {
     }
 
     pub fn view(&self) -> Element<'_, DeckMessage> {
-        let deck_name = text(self.name()).size(25);
-        let plus_button = action(icon_plus(25.0), Some(DeckMessage::NewCard));
+        let deck_name: Element<_> = if self.editing_name {
+            text_input("Name the deck...", &self.name)
+                .on_input(DeckMessage::NameChanged)
+                .on_submit(DeckMessage::FinishEditName)
+                .size(25)
+                .into()
+        } else {
+            text(self.name()).size(25).into()
+        };
 
-        let controls = row![deck_name, horizontal_space(Length::Fill), plus_button];
+        let plus_button = action(icon_plus(35.0), Some(DeckMessage::NewCard));
+        let pencil_button = action(icon_pencil(35.0), Some(DeckMessage::EditName));
+
+        let controls = row![
+            deck_name,
+            horizontal_space(Length::Fill),
+            plus_button,
+            pencil_button
+        ];
 
         let cards = self
             .cards
