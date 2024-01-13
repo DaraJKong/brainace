@@ -54,12 +54,8 @@ where
         tree.diff_children(&[&self.base, &self.modal]);
     }
 
-    fn width(&self) -> Length {
-        self.base.as_widget().width()
-    }
-
-    fn height(&self) -> Length {
-        self.base.as_widget().height()
+    fn size(&self) -> Size<Length> {
+        self.base.as_widget().size()
     }
 
     fn layout(
@@ -188,17 +184,13 @@ where
             .width(Length::Fill)
             .height(Length::Fill);
 
-        let mut child = self
+        let child = self
             .content
             .as_widget()
-            .layout(self.tree, renderer, &limits);
+            .layout(self.tree, renderer, &limits)
+            .align(Alignment::Center, Alignment::Center, limits.max());
 
-        child.align(Alignment::Center, Alignment::Center, limits.max());
-
-        let mut node = layout::Node::with_children(self.size, vec![child]);
-        node.move_to(position);
-
-        node
+        layout::Node::with_children(self.size, vec![child]).move_to(position)
     }
 
     fn on_event(

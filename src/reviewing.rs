@@ -127,7 +127,7 @@ impl Deck {
             pencil_button
         ];
 
-        let cards = self
+        let cards: Vec<Element<_>> = self
             .cards
             .iter()
             .enumerate()
