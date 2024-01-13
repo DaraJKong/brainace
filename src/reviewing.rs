@@ -39,6 +39,7 @@ pub enum DeckMessage {
     BackChanged(String),
     CancelEdit,
     ConfirmEdit,
+    Review,
 }
 
 impl Deck {
@@ -98,11 +99,11 @@ impl Deck {
             DeckMessage::BackChanged(content) => {
                 self.back_content = content;
             }
-            DeckMessage::CancelEdit => {}
             DeckMessage::ConfirmEdit => {
                 self.cards[self.editing_id].front = self.front_content.clone();
                 self.cards[self.editing_id].back = self.back_content.clone();
             }
+            _ => (),
         }
     }
 
@@ -117,15 +118,19 @@ impl Deck {
             text(self.name()).size(25).into()
         };
 
-        let plus_button = action(icon_plus(35.0), Some(DeckMessage::NewCard));
-        let pencil_button = action(icon_pencil(35.0), Some(DeckMessage::EditName));
+        let plus_button = action(icon_plus(30.0), Some(DeckMessage::NewCard));
+        let pencil_button = action(icon_pencil(30.0), Some(DeckMessage::EditName));
+
+        let review_button = action_btn("REVIEW", theme::Button::Default, DeckMessage::Review);
 
         let controls = row![
             deck_name,
             horizontal_space(Length::Fill),
-            plus_button,
-            pencil_button
-        ];
+            row![plus_button, pencil_button],
+            review_button
+        ]
+        .align_items(Alignment::Center)
+        .spacing(10);
 
         let cards = self
             .cards

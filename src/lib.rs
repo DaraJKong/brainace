@@ -137,18 +137,25 @@ impl Application for App {
                         DeckMessage::CardMessage(_, CardMessage::Edit) | DeckMessage::NewCard => {
                             deck.update(deck_message);
                             self.show_modal = true;
+
+                            Command::none()
                         }
                         DeckMessage::CancelEdit | DeckMessage::ConfirmEdit => {
                             deck.update(deck_message);
                             self.show_modal = false;
+
+                            Command::none()
                         }
+                        DeckMessage::Review => self.update(Message::ChangeMode(Mode::Reviewing)),
                         _ => {
                             deck.update(deck_message);
+
+                            Command::none()
                         }
                     }
-                };
-
-                Command::none()
+                } else {
+                    Command::none()
+                }
             }
             Message::CardMessage(i, card_message) => {
                 if let Some(deck) = &mut self.deck {
@@ -187,8 +194,7 @@ impl Application for App {
 
                 Command::none()
             }
-            Message::Continue => Command::none(),
-            Message::Settings => Command::none(),
+            Message::Continue | Message::Settings => Command::none(),
             Message::Close => window::close(window::Id::MAIN),
         }
     }
