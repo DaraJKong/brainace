@@ -132,7 +132,7 @@ impl Deck {
         .align_items(Alignment::Center)
         .spacing(10);
 
-        let cards = self
+        let cards: Vec<Element<_>> = self
             .cards
             .iter()
             .enumerate()
