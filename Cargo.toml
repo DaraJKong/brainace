@@ -1,17 +1,6 @@
-[package]
-name = "brainace-desktop"
-version = "0.0.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-description = "Spaced repetition app for efficient organization and mastery of knowledge"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-iced = { git = "https://github.com/iced-rs/iced", features = ["tokio", "advanced"] }
-chrono = "0.4"
-tokio = { version = "1.35", features = ["fs", "rt"] }
-serde = "1.0"
-ron = "0.8"
-fsrs = { git = "https://github.com/open-spaced-repetition/rs-fsrs.git", features = ["serde"] }
-rfd = "0.12"
+[workspace]
+default-members = ["desktop"]
+members = [
+  "core",
+  "desktop"
+]
