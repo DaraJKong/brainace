@@ -1,14 +1,46 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use fsrs::FSRSItem;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct Deck {
+    name: String,
+    pub cards: Vec<Card>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl Deck {
+    pub fn new(name: &str) -> Deck {
+        Deck {
+            name: name.to_string(),
+            cards: Vec::new(),
+        }
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Card {
+    front: String,
+    back: String,
+    fsrs: Option<FSRSItem>,
+}
+
+impl Card {
+    pub fn new() -> Self {
+        Self {
+            front: String::new(),
+            back: String::new(),
+            fsrs: None,
+        }
+    }
+
+    pub fn front(&self) -> &String {
+        &self.front
+    }
+
+    pub fn back(&self) -> &String {
+        &self.back
     }
 }
