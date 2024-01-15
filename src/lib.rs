@@ -219,50 +219,43 @@ impl Application for App {
 }
 
 fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
-    let (deck_info, deck_cards) = maybe_deck.map_or_else(
+    let (deck_info, deck_cards): (_, Element<_>) = maybe_deck.map_or_else(
         || {
             (
                 text("No deck selected")
                     .size(25)
                     .style(theme::Text::Secondary),
-                container(""),
+                "".into(),
             )
         },
         |deck| {
             (
                 text("Deck loaded").size(25).style(theme::Text::Secondary),
-                container(deck.view().map(Message::DeckMessage)),
+                deck.view().map(Message::DeckMessage),
             )
         },
     );
 
     let open_button = action_btn("OPEN", theme::Button::Default, Message::Open);
-    let review_button = action_btn(
-        "REVIEW",
-        theme::Button::Default,
-        Message::ChangeMode(Mode::Reviewing),
-    );
 
-    container(
-        column![
-            row![
-                deck_info,
-                horizontal_space(Length::Fill),
-                open_button,
-                review_button
-            ]
+    let header = container(
+        row![open_button, horizontal_space(Length::Fill), deck_info]
             .align_items(Alignment::Center)
             .spacing(15),
-            deck_cards
-        ]
-        .width(Length::Fixed(1000.0))
-        .spacing(20),
     )
-    .width(Length::Fill)
-    .height(Length::Fill)
-    .center_x()
-    .center_y()
-    .into()
+    .width(1000)
+    .height(150)
+    .center_y();
+
+    let main = container(deck_cards)
+        .width(1000)
+        .height(Length::Fill)
+        .padding([25, 0]);
+
+    column![header, horizontal_rule(0), main]
+        .width(Length::Fill)
+        .align_items(Alignment::Center)
+        .into()
 }
 
 fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
@@ -284,7 +277,7 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
             .align_items(Alignment::Center)
             .spacing(15),
     )
-    .width(Length::Fixed(1000.0))
+    .width(1000)
     .height(150)
     .center_y();
 
@@ -300,7 +293,7 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
     };
 
     let main = container(main_content)
-        .width(Length::Fixed(1000.0))
+        .width(1000)
         .height(Length::Fill)
         .center_y()
         .padding([0, 125]);
@@ -333,12 +326,13 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
     };
 
     let footer = container(footer_content)
-        .width(Length::Fixed(1000.0))
+        .width(1000)
         .height(150)
         .center_x()
         .center_y();
 
     column![header, main, horizontal_rule(0), footer]
+        .width(Length::Fill)
         .align_items(Alignment::Center)
         .into()
 }
