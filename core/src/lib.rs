@@ -1,5 +1,18 @@
-use fsrs::FSRSItem;
+use chrono::{DateTime, Utc};
+use fsrs::{FSRSItem, FSRSReview, FSRS};
 use serde::{Deserialize, Serialize};
+
+pub struct Config {
+    pub fsrs: FSRS,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            fsrs: FSRS::new(None).unwrap(),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Deck {
@@ -24,23 +37,56 @@ impl Deck {
 pub struct Card {
     front: String,
     back: String,
-    fsrs: Option<FSRSItem>,
+    fsrs_item: FSRSItem,
+    last_review: Option<DateTime<Utc>>,
 }
 
-impl Card {
-    pub fn new() -> Self {
+impl Default for Card {
+    fn default() -> Self {
         Self {
             front: String::new(),
             back: String::new(),
-            fsrs: None,
+            fsrs_item: FSRSItem {
+                reviews: Vec::new(),
+            },
+            last_review: None,
+        }
+    }
+}
+
+impl Card {
+    pub fn new(front: &str, back: &str) -> Self {
+        Self {
+            front: front.to_string(),
+            back: back.to_string(),
+            ..Default::default()
         }
     }
 
-    pub fn front(&self) -> &String {
-        &self.front
+    pub fn review(&mut self, rating: u32, now: DateTime<Utc>) {
+        if let Some(review_time) = self.last_review {
+            let delta_t = (now - review_time).num_days() as u32;
+            let review = FSRSReview { rating, delta_t };
+
+            self.fsrs_item.reviews.push(review);
+        }
+
+        self.last_review = Some(now);
     }
 
-    pub fn back(&self) -> &String {
-        &self.back
+    pub fn front(&self) -> String {
+        self.front.clone()
+    }
+
+    pub fn back(&self) -> String {
+        self.back.clone()
+    }
+
+    pub fn set_front(&mut self, front: &str) {
+        self.front = front.to_string();
+    }
+
+    pub fn set_back(&mut self, back: &str) {
+        self.back = back.to_string();
     }
 }

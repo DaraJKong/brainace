@@ -6,9 +6,10 @@ license = "MIT"
 description = "Spaced repetition app for efficient organization and mastery of knowledge"
 
 [dependencies]
+brainace_core = { version = "0.0.0", path = "../core" }
+
 iced = { git = "https://github.com/iced-rs/iced", features = ["tokio", "advanced"] }
 tokio = { version = "1.35", features = ["fs", "rt"] }
-fsrs = { git = "https://github.com/open-spaced-repetition/rs-fsrs.git", features = ["serde"] }
 serde = "1.0"
 ron = "0.8"
 chrono = "0.4"

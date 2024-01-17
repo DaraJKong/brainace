@@ -285,7 +285,8 @@ dependencies = [
 name = "brainace_core"
 version = "0.0.0"
 dependencies = [
- "fsrs 0.1.0 (git+https://github.com/open-spaced-repetition/fsrs-rs.git)",
+ "chrono",
+ "fsrs",
  "serde",
 ]
 
@@ -293,8 +294,8 @@ dependencies = [
 name = "brainace_desktop"
 version = "0.0.0"
 dependencies = [
+ "brainace_core",
  "chrono",
- "fsrs 0.1.0 (git+https://github.com/open-spaced-repetition/rs-fsrs.git)",
  "iced",
  "rfd",
  "ron",
@@ -1302,16 +1303,6 @@ dependencies = [
  "serde",
  "snafu",
  "strum",
-]
-
-[[package]]
-name = "fsrs"
-version = "0.1.0"
-source = "git+https://github.com/open-spaced-repetition/rs-fsrs.git#90288dbb17654c242df76972dce2e4ffcce6aba3"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
 ]
 
 [[package]]

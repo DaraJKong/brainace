@@ -4,9 +4,6 @@ use crate::{
     action, action_btn, border_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_plus,
     icon_trash, theme, widget::Element,
 };
-use chrono::Utc;
-pub use fsrs::Card as FSRSCard;
-use fsrs::{Rating, FSRS};
 use iced::{
     font::Weight,
     widget::{column, container, horizontal_space, row, text, text_input},
@@ -60,14 +57,14 @@ impl Deck {
 
     fn edit(&mut self, id: usize) {
         self.editing_id = id;
-        self.front_content = self.cards[id].front();
-        self.back_content = self.cards[id].back();
+        self.front_content = self.cards[id].card.front();
+        self.back_content = self.cards[id].card.back();
     }
 
     pub fn update(&mut self, message: DeckMessage) {
         match message {
             DeckMessage::NewCard => {
-                let card = Card::new();
+                let card = Card::new("", "");
                 self.cards.push(card);
 
                 let last_id = self.cards.len() - 1;
@@ -100,8 +97,12 @@ impl Deck {
                 self.back_content = content;
             }
             DeckMessage::ConfirmEdit => {
-                self.cards[self.editing_id].front = self.front_content.clone();
-                self.cards[self.editing_id].back = self.back_content.clone();
+                self.cards[self.editing_id]
+                    .card
+                    .set_front(&self.front_content);
+                self.cards[self.editing_id]
+                    .card
+                    .set_back(&self.back_content);
             }
             _ => (),
         }
@@ -181,11 +182,9 @@ impl Deck {
 
 #[derive(Serialize, Deserialize)]
 pub struct Card {
-    front: String,
-    back: String,
+    pub card: brainace_core::Card,
     #[serde(skip)]
     state: CardState,
-    fsrs: FSRSCard,
 }
 
 enum CardState {
@@ -220,21 +219,11 @@ pub enum CardMessage {
 }
 
 impl Card {
-    pub fn new() -> Self {
+    pub fn new(front: &str, back: &str) -> Self {
         Self {
-            front: String::new(),
-            back: String::new(),
+            card: brainace_core::Card::new(front, back),
             state: CardState::default(),
-            fsrs: FSRSCard::new(),
         }
-    }
-
-    pub fn front(&self) -> String {
-        self.front.clone()
-    }
-
-    pub fn back(&self) -> String {
-        self.back.clone()
     }
 
     pub const fn revealed(&self) -> bool {
@@ -244,30 +233,24 @@ impl Card {
         }
     }
 
-    pub fn log(&self) -> &impl fmt::Debug {
-        &self.fsrs.log
-    }
-
-    pub fn schedule(&mut self, fsrs: FSRS, rating: Rating) {
-        let scheduled_cards = fsrs.schedule(self.fsrs.clone(), Utc::now());
-
-        self.fsrs = scheduled_cards.select_card(rating);
-    }
-
     pub fn update(&mut self, message: CardMessage) {
         match message {
             CardMessage::Hide => self.state = CardState::Hidden,
             CardMessage::Reveal => self.state = CardState::Revealed,
             CardMessage::ToggleState => self.state.toggle(),
-            CardMessage::FrontChanged(content) => self.front = content,
-            CardMessage::BackChanged(content) => self.back = content,
+            CardMessage::FrontChanged(content) => {
+                self.card.set_front(&content);
+            }
+            CardMessage::BackChanged(content) => {
+                self.card.set_back(&content);
+            }
             _ => {}
         }
     }
 
     pub fn view(&self) -> Element<CardMessage> {
-        let front = text(self.front.clone()).size(25);
-        let back = text(self.back.clone()).size(25).style(theme::Text::Accent);
+        let front = text(self.card.front()).size(25);
+        let back = text(self.card.back()).size(25).style(theme::Text::Accent);
 
         let content: Element<_> = match self.state {
             CardState::Hidden => container(front).padding([15, 25]).into(),
@@ -294,8 +277,8 @@ impl Card {
     }
 
     pub fn edit_view(&self) -> Element<CardMessage> {
-        let front = text(self.front.clone()).size(25);
-        let back = text(self.back.clone()).size(25).style(theme::Text::Accent);
+        let front = text(self.card.front()).size(25);
+        let back = text(self.card.back()).size(25).style(theme::Text::Accent);
 
         let eye_button = match self.state {
             CardState::Hidden => icon_btn(icon_eye_off(20.0), Some(CardMessage::Reveal)),

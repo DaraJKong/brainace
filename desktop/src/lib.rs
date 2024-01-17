@@ -13,7 +13,6 @@ use theme::Theme;
 use widget::Element;
 
 use chrono::Utc;
-use fsrs::{Rating, FSRS};
 
 use iced::widget::{
     button, column, container, horizontal_rule, horizontal_space, progress_bar, row, text,
@@ -25,7 +24,7 @@ use widget::modal::Modal;
 pub struct App {
     show_modal: bool,
     mode: Mode,
-    fsrs: FSRS,
+    fsrs: brainace_core::Config,
     deck: Option<Deck>,
     reviewing_id: usize,
 }
@@ -43,7 +42,7 @@ pub enum Message {
     CardMessage(usize, CardMessage),
     Skip,
     Reveal,
-    Rate(Rating),
+    Rate(u32),
     Continue,
     Close,
     Settings,
@@ -62,7 +61,7 @@ impl Application for App {
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
-        let fsrs = FSRS::default();
+        let fsrs = brainace_core::Config::default();
 
         let batch = [window::change_mode(
             window::Id::MAIN,
@@ -186,8 +185,9 @@ impl Application for App {
             }
             Message::Rate(rating) => {
                 if let Some(deck) = &mut self.deck {
-                    deck.cards[self.reviewing_id].schedule(self.fsrs, rating);
-                    println!("{:?}", deck.cards[self.reviewing_id].log());
+                    deck.cards[self.reviewing_id]
+                        .card
+                        .review(rating, Utc::now());
 
                     self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
                 }
@@ -307,10 +307,10 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
 
         continue_button
     } else if deck.cards[id].revealed() {
-        let again_button = border_action_btn("AGAIN", ROSE_500, Message::Rate(Rating::Again));
-        let hard_button = border_action_btn("HARD", YELLOW_500, Message::Rate(Rating::Hard));
-        let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(Rating::Good));
-        let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(Rating::Easy));
+        let again_button = border_action_btn("AGAIN", ROSE_500, Message::Rate(1));
+        let hard_button = border_action_btn("HARD", YELLOW_500, Message::Rate(2));
+        let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(3));
+        let easy_button = border_action_btn("EASY", GREEN_500, Message::Rate(4));
 
         container(row![again_button, hard_button, good_button, easy_button].spacing(15)).into()
     } else {
