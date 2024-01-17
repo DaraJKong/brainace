@@ -184,27 +184,7 @@ impl Deck {
 pub struct Card {
     pub card: brainace_core::Card,
     #[serde(skip)]
-    state: CardState,
-}
-
-enum CardState {
-    Hidden,
-    Revealed,
-}
-
-impl Default for CardState {
-    fn default() -> Self {
-        Self::Hidden
-    }
-}
-
-impl CardState {
-    fn toggle(&mut self) {
-        match self {
-            Self::Hidden => *self = Self::Revealed,
-            Self::Revealed => *self = Self::Hidden,
-        }
-    }
+    pub revealed: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -222,22 +202,15 @@ impl Card {
     pub fn new(front: &str, back: &str) -> Self {
         Self {
             card: brainace_core::Card::new(front, back),
-            state: CardState::default(),
-        }
-    }
-
-    pub const fn revealed(&self) -> bool {
-        match self.state {
-            CardState::Hidden => false,
-            CardState::Revealed => true,
+            revealed: false,
         }
     }
 
     pub fn update(&mut self, message: CardMessage) {
         match message {
-            CardMessage::Hide => self.state = CardState::Hidden,
-            CardMessage::Reveal => self.state = CardState::Revealed,
-            CardMessage::ToggleState => self.state.toggle(),
+            CardMessage::Hide => self.revealed = false,
+            CardMessage::Reveal => self.revealed = true,
+            CardMessage::ToggleState => self.revealed = !self.revealed,
             CardMessage::FrontChanged(content) => {
                 self.card.set_front(&content);
             }
@@ -252,21 +225,20 @@ impl Card {
         let front = text(self.card.front()).size(25);
         let back = text(self.card.back()).size(25).style(theme::Text::Accent);
 
-        let content: Element<_> = match self.state {
-            CardState::Hidden => container(front).padding([15, 25]).into(),
-            CardState::Revealed => {
-                let front_container = container(front)
-                    .width(Length::Fill)
-                    .center_x()
-                    .padding([15, 25]);
-                let back_container = container(back)
-                    .width(Length::Fill)
-                    .center_x()
-                    .padding([15, 25])
-                    .style(theme::Container::BorderedFooter);
+        let content: Element<_> = if self.revealed {
+            let front_container = container(front)
+                .width(Length::Fill)
+                .center_x()
+                .padding([15, 25]);
+            let back_container = container(back)
+                .width(Length::Fill)
+                .center_x()
+                .padding([15, 25])
+                .style(theme::Container::BorderedFooter);
 
-                column![front_container, back_container].into()
-            }
+            column![front_container, back_container].into()
+        } else {
+            container(front).padding([15, 25]).into()
         };
 
         container(content)
@@ -280,10 +252,12 @@ impl Card {
         let front = text(self.card.front()).size(25);
         let back = text(self.card.back()).size(25).style(theme::Text::Accent);
 
-        let eye_button = match self.state {
-            CardState::Hidden => icon_btn(icon_eye_off(20.0), Some(CardMessage::Reveal)),
-            CardState::Revealed => icon_btn(icon_eye(20.0), Some(CardMessage::Hide)),
+        let eye_button = if self.revealed {
+            icon_btn(icon_eye(20.0), Some(CardMessage::Hide))
+        } else {
+            icon_btn(icon_eye_off(20.0), Some(CardMessage::Reveal))
         };
+
         let edit_button = icon_btn(icon_pencil(20.0), Some(CardMessage::Edit));
         let trash_button = icon_btn(icon_trash(20.0), Some(CardMessage::Delete));
 
@@ -296,21 +270,20 @@ impl Card {
         ]
         .spacing(5);
 
-        let content: Element<_> = match self.state {
-            CardState::Hidden => container(front_with_controls).padding([15, 25]).into(),
-            CardState::Revealed => {
-                let front_container = container(front_with_controls)
-                    .width(Length::Fill)
-                    .center_x()
-                    .padding([15, 25]);
-                let back_container = container(back)
-                    .width(Length::Fill)
-                    .center_x()
-                    .padding([15, 25])
-                    .style(theme::Container::BorderedFooter);
+        let content: Element<_> = if self.revealed {
+            let front_container = container(front_with_controls)
+                .width(Length::Fill)
+                .center_x()
+                .padding([15, 25]);
+            let back_container = container(back)
+                .width(Length::Fill)
+                .center_x()
+                .padding([15, 25])
+                .style(theme::Container::BorderedFooter);
 
-                column![front_container, back_container].into()
-            }
+            column![front_container, back_container].into()
+        } else {
+            container(front_with_controls).padding([15, 25]).into()
         };
 
         container(content)

@@ -173,7 +173,7 @@ impl Application for App {
             Message::Reveal => {
                 if let Some(deck) = &mut self.deck {
                     if let Some(card) = deck.cards.get_mut(self.reviewing_id) {
-                        if card.revealed() {
+                        if card.revealed {
                             self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
                         } else {
                             card.update(CardMessage::Reveal);
@@ -306,7 +306,7 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
         );
 
         continue_button
-    } else if deck.cards[id].revealed() {
+    } else if deck.cards[id].revealed {
         let again_button = border_action_btn("AGAIN", ROSE_500, Message::Rate(1));
         let hard_button = border_action_btn("HARD", YELLOW_500, Message::Rate(2));
         let good_button = border_action_btn("GOOD", CYAN_500, Message::Rate(3));
