@@ -33,7 +33,7 @@ impl Deck {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Card {
     front: String,
     back: String,

@@ -1,3 +1,4 @@
+mod components;
 mod reviewing;
 mod theme;
 mod widget;
@@ -6,6 +7,7 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use components::card_editor;
 use iced::font::Weight;
 use reviewing::{Card, CardMessage, Deck, DeckMessage};
 use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
@@ -26,6 +28,7 @@ pub struct App {
     mode: Mode,
     fsrs: brainace_core::Config,
     deck: Option<Deck>,
+    editing_id: usize,
     reviewing_id: usize,
 }
 
@@ -36,6 +39,8 @@ pub enum Message {
     ChangeMode(Mode),
     Open,
     Save,
+    CancelEdit,
+    ConfirmEdit(String, String),
     DeckLoaded(Result<Arc<String>, Error>),
     DeckSaved(Result<PathBuf, Error>),
     DeckMessage(DeckMessage),
@@ -74,6 +79,7 @@ impl Application for App {
                 mode: Mode::Managing,
                 fsrs,
                 deck: None,
+                editing_id: 0,
                 reviewing_id: 0,
             },
             Command::batch(batch),
@@ -123,6 +129,19 @@ impl Application for App {
                     Message::DeckSaved,
                 )
             }
+            Message::CancelEdit => {
+                self.show_modal = false;
+                Command::none()
+            }
+            Message::ConfirmEdit(front, back) => {
+                if let Some(deck) = &mut self.deck {
+                    deck.cards[self.editing_id].card.set_front(&front);
+                    deck.cards[self.editing_id].card.set_back(&back);
+                }
+
+                self.show_modal = false;
+                Command::none()
+            }
             Message::DeckLoaded(Ok(content)) => {
                 self.deck = ron::from_str(content.as_str()).unwrap();
 
@@ -133,16 +152,12 @@ impl Application for App {
             Message::DeckMessage(deck_message) => {
                 if let Some(deck) = &mut self.deck {
                     match deck_message {
-                        DeckMessage::CardMessage(_, CardMessage::Edit) | DeckMessage::NewCard => {
+                        DeckMessage::CardMessage(i, CardMessage::Edit)
+                        | DeckMessage::NewCard(i) => {
                             deck.update(deck_message);
+                            self.editing_id = i;
+
                             self.show_modal = true;
-
-                            Command::none()
-                        }
-                        DeckMessage::CancelEdit | DeckMessage::ConfirmEdit => {
-                            deck.update(deck_message);
-                            self.show_modal = false;
-
                             Command::none()
                         }
                         DeckMessage::Review => self.update(Message::ChangeMode(Mode::Reviewing)),
@@ -207,7 +222,14 @@ impl Application for App {
 
         let modal: Element<_> = self.deck.as_ref().map_or_else(
             || "".into(),
-            |deck| deck.card_editor().map(Message::DeckMessage),
+            |deck| {
+                card_editor(
+                    Some(deck.cards[self.editing_id].card.clone()),
+                    || Message::CancelEdit,
+                    |front, back| Message::ConfirmEdit(front.to_string(), back.to_string()),
+                )
+                .into()
+            },
         );
 
         if self.show_modal {

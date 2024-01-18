@@ -1,13 +1,12 @@
 use std::fmt;
 
 use crate::{
-    action, action_btn, border_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_plus,
-    icon_trash, theme, widget::Element,
+    action, action_btn, icon_btn, icon_eye, icon_eye_off, icon_pencil, icon_plus, icon_trash,
+    theme, widget::Element,
 };
 use iced::{
-    font::Weight,
     widget::{column, container, horizontal_space, row, text, text_input},
-    Alignment, Font, Length,
+    Alignment, Length,
 };
 use serde::{Deserialize, Serialize};
 
@@ -17,25 +16,17 @@ pub struct Deck {
     pub cards: Vec<Card>,
     #[serde(skip)]
     editing_name: bool,
-    #[serde(skip)]
-    editing_id: usize,
-    #[serde(skip)]
-    front_content: String,
-    #[serde(skip)]
-    back_content: String,
 }
 
 #[derive(Clone, Debug)]
 pub enum DeckMessage {
-    NewCard,
+    NewCard(usize),
     EditName,
     NameChanged(String),
     FinishEditName,
     CardMessage(usize, CardMessage),
     FrontChanged(String),
     BackChanged(String),
-    CancelEdit,
-    ConfirmEdit,
     Review,
 }
 
@@ -45,9 +36,6 @@ impl Deck {
             name: name.to_string(),
             cards: Vec::new(),
             editing_name: false,
-            editing_id: 0,
-            front_content: String::new(),
-            back_content: String::new(),
         }
     }
 
@@ -55,20 +43,11 @@ impl Deck {
         self.name.clone()
     }
 
-    fn edit(&mut self, id: usize) {
-        self.editing_id = id;
-        self.front_content = self.cards[id].card.front();
-        self.back_content = self.cards[id].card.back();
-    }
-
     pub fn update(&mut self, message: DeckMessage) {
         match message {
-            DeckMessage::NewCard => {
+            DeckMessage::NewCard(i) => {
                 let card = Card::new("", "");
                 self.cards.push(card);
-
-                let last_id = self.cards.len() - 1;
-                self.edit(last_id);
             }
             DeckMessage::EditName => {
                 self.editing_name = true;
@@ -80,9 +59,6 @@ impl Deck {
                 self.editing_name = false;
             }
             DeckMessage::CardMessage(i, message) => match message {
-                CardMessage::Edit => {
-                    self.edit(i);
-                }
                 CardMessage::Delete => {
                     self.cards.remove(i);
                 }
@@ -90,20 +66,6 @@ impl Deck {
                     self.cards[i].update(message);
                 }
             },
-            DeckMessage::FrontChanged(content) => {
-                self.front_content = content;
-            }
-            DeckMessage::BackChanged(content) => {
-                self.back_content = content;
-            }
-            DeckMessage::ConfirmEdit => {
-                self.cards[self.editing_id]
-                    .card
-                    .set_front(&self.front_content);
-                self.cards[self.editing_id]
-                    .card
-                    .set_back(&self.back_content);
-            }
             _ => (),
         }
     }
@@ -119,7 +81,10 @@ impl Deck {
             text(self.name()).size(25).into()
         };
 
-        let plus_button = action(icon_plus(30.0), Some(DeckMessage::NewCard));
+        let plus_button = action(
+            icon_plus(30.0),
+            Some(DeckMessage::NewCard(self.cards.len())),
+        );
         let pencil_button = action(icon_pencil(30.0), Some(DeckMessage::EditName));
 
         let review_button = action_btn("REVIEW", theme::Button::Default, DeckMessage::Review);
@@ -146,37 +111,6 @@ impl Deck {
         column![controls, column(cards).spacing(10)]
             .spacing(15)
             .into()
-    }
-
-    pub fn card_editor(&self) -> Element<DeckMessage> {
-        let front_input = text_input("Front", &self.front_content)
-            .on_input(DeckMessage::FrontChanged)
-            .size(25);
-        let back_input = text_input("Back", &self.back_content)
-            .on_input(DeckMessage::BackChanged)
-            .size(25);
-
-        let mut nunito_bold = Font::with_name("nunito");
-        nunito_bold.weight = Weight::Semibold;
-
-        let cancel_text = text("CANCEL").font(nunito_bold).size(25);
-
-        let cancel_button = border_btn(cancel_text.into(), DeckMessage::CancelEdit);
-        let ok_button = action_btn("OK", theme::Button::Default, DeckMessage::ConfirmEdit);
-
-        container(
-            column![
-                front_input,
-                back_input,
-                row![cancel_button.into(), ok_button].spacing(15)
-            ]
-            .align_items(Alignment::Center)
-            .spacing(15)
-            .padding(50),
-        )
-        .width(Length::Fixed(850.0))
-        .style(theme::Container::Modal)
-        .into()
     }
 }
 
