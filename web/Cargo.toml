@@ -6,4 +6,10 @@ license = "MIT"
 description = "Spaced repetition app for efficient organization and mastery of knowledge"
 
 [dependencies]
-brainace_core = { version = "0.0.0", path = "../core" }
+dioxus = { version = "*" }
+dioxus-fullstack = { version = "*" }
+
+[features]
+default = []
+ssr = ["dioxus-fullstack/axum"]
+web = ["dioxus-fullstack/web"]
