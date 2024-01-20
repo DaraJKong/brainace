@@ -1,6 +1,8 @@
 [workspace]
-default-members = ["desktop"]
+default-members = ["web"]
 members = [
   "core",
-  "desktop"
+  "desktop",
+  "web"
 ]
+resolver = "2"

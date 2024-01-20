@@ -326,6 +326,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "brainace_web"
+version = "0.0.0"
+dependencies = [
+ "brainace_core",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
