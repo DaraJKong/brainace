@@ -14,9 +14,9 @@ impl Default for Config {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Deck {
-    name: String,
+    pub name: String,
     pub cards: Vec<Card>,
 }
 
@@ -27,16 +27,14 @@ impl Deck {
             cards: Vec::new(),
         }
     }
-
-    pub fn name(&self) -> &String {
-        &self.name
-    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Card {
     front: String,
     back: String,
+    #[serde(skip)]
+    pub revealed: bool,
     fsrs_item: FSRSItem,
     last_review: Option<DateTime<Utc>>,
 }
@@ -46,6 +44,7 @@ impl Default for Card {
         Self {
             front: String::new(),
             back: String::new(),
+            revealed: false,
             fsrs_item: FSRSItem {
                 reviews: Vec::new(),
             },

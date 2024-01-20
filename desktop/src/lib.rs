@@ -7,9 +7,11 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use components::card_editor;
+use brainace_core::Deck;
+use components::card::{card_view, CardEvent};
+use components::card_editor::card_editor;
+use components::deck::{deck_view, DeckEvent, DeckView};
 use iced::font::Weight;
-use reviewing::{Card, CardMessage, Deck, DeckMessage};
 use theme::palette::{CYAN_500, GREEN_500, ROSE_500, YELLOW_500};
 use theme::Theme;
 use widget::Element;
@@ -27,7 +29,7 @@ pub struct App {
     show_modal: bool,
     mode: Mode,
     fsrs: brainace_core::Config,
-    deck: Option<Deck>,
+    deck_view: Option<DeckView<Message>>,
     editing_id: usize,
     reviewing_id: usize,
 }
@@ -43,8 +45,7 @@ pub enum Message {
     ConfirmEdit(String, String),
     DeckLoaded(Result<Arc<String>, Error>),
     DeckSaved(Result<PathBuf, Error>),
-    DeckMessage(DeckMessage),
-    CardMessage(usize, CardMessage),
+    DeckEvent(DeckEvent),
     Skip,
     Reveal,
     Rate(u32),
@@ -59,7 +60,7 @@ enum Mode {
     Reviewing,
 }
 
-impl Application for App {
+impl<'a> Application for App {
     type Executor = executor::Default;
     type Message = Message;
     type Theme = Theme;
@@ -78,7 +79,7 @@ impl Application for App {
                 show_modal: false,
                 mode: Mode::Managing,
                 fsrs,
-                deck: None,
+                deck_view: None,
                 editing_id: 0,
                 reviewing_id: 0,
             },
@@ -106,11 +107,12 @@ impl Application for App {
                         self.mode = mode;
                     }
                     Mode::Reviewing => {
-                        if let Some(deck) = &mut self.deck {
-                            for card in &mut deck.cards {
-                                card.update(CardMessage::Hide);
-                            }
-
+                        if let Some(deck_view) = &mut self.deck_view {
+                            deck_view
+                                .deck
+                                .cards
+                                .iter_mut()
+                                .for_each(|card| card.set_back(""));
                             self.reviewing_id = 0;
 
                             self.mode = mode;
@@ -122,7 +124,7 @@ impl Application for App {
             }
             Message::Open => Command::perform(pick_file(), Message::DeckLoaded),
             Message::Save => {
-                let text = ron::to_string(&self.deck).unwrap();
+                let text = ron::to_string(&self.deck_view.as_ref().unwrap().deck).unwrap();
 
                 Command::perform(
                     save_file(Some("mathematical_constants.ron".into()), text),
@@ -134,64 +136,53 @@ impl Application for App {
                 Command::none()
             }
             Message::ConfirmEdit(front, back) => {
-                if let Some(deck) = &mut self.deck {
-                    deck.cards[self.editing_id].card.set_front(&front);
-                    deck.cards[self.editing_id].card.set_back(&back);
+                if let Some(deck_view) = &mut self.deck_view {
+                    deck_view.deck.cards[self.editing_id].set_front(&front);
+                    deck_view.deck.cards[self.editing_id].set_back(&back);
                 }
 
                 self.show_modal = false;
                 Command::none()
             }
             Message::DeckLoaded(Ok(content)) => {
-                self.deck = ron::from_str(content.as_str()).unwrap();
+                if let Some(deck_view) = &mut self.deck_view {
+                    deck_view.deck = ron::from_str(content.as_str()).unwrap();
+                }
 
                 Command::none()
             }
             Message::DeckSaved(Ok(path)) => Command::none(),
             Message::DeckLoaded(Err(error)) | Message::DeckSaved(Err(error)) => Command::none(),
-            Message::DeckMessage(deck_message) => {
-                if let Some(deck) = &mut self.deck {
+            Message::DeckEvent(deck_message) => {
+                if let Some(deck) = &mut self.deck_view {
                     match deck_message {
-                        DeckMessage::CardMessage(i, CardMessage::Edit)
-                        | DeckMessage::NewCard(i) => {
-                            deck.update(deck_message);
+                        DeckEvent::Review => self.update(Message::ChangeMode(Mode::Reviewing)),
+                        DeckEvent::CardEvent(i, CardEvent::Edit) | DeckEvent::NewCard(i) => {
                             self.editing_id = i;
-
                             self.show_modal = true;
-                            Command::none()
-                        }
-                        DeckMessage::Review => self.update(Message::ChangeMode(Mode::Reviewing)),
-                        _ => {
-                            deck.update(deck_message);
 
                             Command::none()
                         }
+                        _ => Command::none(),
                     }
                 } else {
                     Command::none()
                 }
             }
-            Message::CardMessage(i, card_message) => {
-                if let Some(deck) = &mut self.deck {
-                    deck.cards[i].update(card_message);
-                }
-
-                Command::none()
-            }
             Message::Skip => {
-                if let Some(deck) = &self.deck {
-                    self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
+                if let Some(deck_view) = &self.deck_view {
+                    self.reviewing_id =
+                        (self.reviewing_id + 1).clamp(0, deck_view.deck.cards.len());
                 }
 
                 Command::none()
             }
             Message::Reveal => {
-                if let Some(deck) = &mut self.deck {
-                    if let Some(card) = deck.cards.get_mut(self.reviewing_id) {
+                if let Some(deck_view) = &mut self.deck_view {
+                    if let Some(card) = deck_view.deck.cards.get_mut(self.reviewing_id) {
                         if card.revealed {
-                            self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
-                        } else {
-                            card.update(CardMessage::Reveal);
+                            self.reviewing_id =
+                                (self.reviewing_id + 1).clamp(0, deck_view.deck.cards.len());
                         }
                     }
                 }
@@ -199,12 +190,11 @@ impl Application for App {
                 Command::none()
             }
             Message::Rate(rating) => {
-                if let Some(deck) = &mut self.deck {
-                    deck.cards[self.reviewing_id]
-                        .card
-                        .review(rating, Utc::now());
+                if let Some(deck_view) = &mut self.deck_view {
+                    deck_view.deck.cards[self.reviewing_id].review(rating, Utc::now());
 
-                    self.reviewing_id = (self.reviewing_id + 1).clamp(0, deck.cards.len());
+                    self.reviewing_id =
+                        (self.reviewing_id + 1).clamp(0, deck_view.deck.cards.len());
                 }
 
                 Command::none()
@@ -216,15 +206,18 @@ impl Application for App {
 
     fn view(&self) -> Element<'_, Message> {
         let page = match self.mode {
-            Mode::Managing => manage_page(self.deck.as_ref()),
-            Mode::Reviewing => review_page(self.deck.as_ref().unwrap(), self.reviewing_id),
+            Mode::Managing => manage_page(self.deck_view.as_ref().map(|view| view.deck.clone())),
+            Mode::Reviewing => review_page(
+                self.deck_view.as_ref().unwrap().deck.clone(),
+                self.reviewing_id,
+            ),
         };
 
-        let modal: Element<_> = self.deck.as_ref().map_or_else(
+        let modal: Element<_> = self.deck_view.as_ref().map_or_else(
             || "".into(),
-            |deck| {
+            |deck_view| {
                 card_editor(
-                    Some(deck.cards[self.editing_id].card.clone()),
+                    Some(deck_view.deck.cards[self.editing_id].clone()),
                     || Message::CancelEdit,
                     |front, back| Message::ConfirmEdit(front.to_string(), back.to_string()),
                 )
@@ -240,7 +233,7 @@ impl Application for App {
     }
 }
 
-fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
+fn manage_page<'a>(maybe_deck: Option<Deck>) -> Element<'a, Message> {
     let (deck_info, deck_cards): (_, Element<_>) = maybe_deck.map_or_else(
         || {
             (
@@ -253,7 +246,7 @@ fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
         |deck| {
             (
                 text("Deck loaded").size(25).style(theme::Text::Secondary),
-                deck.view().map(Message::DeckMessage),
+                deck_view(deck, || Message::DeckEvent(DeckEvent::Review)).into(),
             )
         },
     );
@@ -280,7 +273,7 @@ fn manage_page(maybe_deck: Option<&Deck>) -> Element<'_, Message> {
         .into()
 }
 
-fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
+fn review_page<'a>(deck: Deck, id: usize) -> Element<'a, Message> {
     let cancel_icon = action(icon_cancel(25.0), Some(Message::Close));
     let cog_icon = action(icon_cog(25.0), Some(Message::Settings));
 
@@ -309,9 +302,7 @@ fn review_page(deck: &'_ Deck, id: usize) -> Element<'_, Message> {
             .center_x()
             .into()
     } else {
-        deck.cards[id]
-            .view()
-            .map(move |message| Message::CardMessage(id, message))
+        card_view(deck.cards[id].clone()).into()
     };
 
     let main = container(main_content)
