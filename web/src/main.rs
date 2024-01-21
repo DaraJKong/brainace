@@ -3,15 +3,28 @@ use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
 fn main() {
-    LaunchBuilder::new(app).launch();
+    LaunchBuilder::new(App).launch();
 }
 
-fn app(cx: Scope) -> Element {
-    let mut count = use_state(cx, || 0);
+fn App(cx: Scope) -> Element {
+    let mut leaf = use_state(cx, || {
+        brainace_core::Leaf::new("The first five digits of Pi are [...]", "3.1415")
+    });
 
-    cx.render(rsx! {
-        h1 { class: "text-emerald-500", "High-Five counter: {count}" }
-        button { onclick: move |_| count += 1, "Up high!" }
-        button { onclick: move |_| count -= 1, "Down low!" }
-    })
+    render! {
+        Leaf {
+            leaf: leaf.get()
+        }
+    }
+}
+
+#[component]
+fn Leaf<'a>(cx: Scope, leaf: &'a brainace_core::Leaf) -> Element {
+    let front = leaf.quiz();
+    let back = leaf.answer();
+
+    render! {
+        p { front }
+        p { back }
+    }
 }

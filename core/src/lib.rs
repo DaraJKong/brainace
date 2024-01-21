@@ -1,91 +1,74 @@
 use chrono::{DateTime, Utc};
-use fsrs::{FSRSItem, FSRSReview, FSRS};
+use fsrs::{Card, Rating, FSRS};
 use serde::{Deserialize, Serialize};
 
+#[derive(Default)]
 pub struct Config {
     pub fsrs: FSRS,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            fsrs: FSRS::new(None).unwrap(),
-        }
-    }
-}
-
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Deck {
+pub struct Stem {
     pub name: String,
-    pub cards: Vec<Card>,
+    pub leaves: Vec<Leaf>,
 }
 
-impl Deck {
-    pub fn new(name: &str) -> Deck {
-        Deck {
+impl Stem {
+    pub fn new(name: &str) -> Stem {
+        Stem {
             name: name.to_string(),
-            cards: Vec::new(),
+            leaves: Vec::new(),
         }
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Card {
-    front: String,
-    back: String,
+#[derive(PartialEq, Clone, Serialize, Deserialize)]
+pub struct Leaf {
+    quiz: String,
+    answer: String,
+    card: Card,
     #[serde(skip)]
     pub revealed: bool,
-    fsrs_item: FSRSItem,
-    last_review: Option<DateTime<Utc>>,
 }
 
-impl Default for Card {
+impl Default for Leaf {
     fn default() -> Self {
         Self {
-            front: String::new(),
-            back: String::new(),
+            quiz: String::new(),
+            answer: String::new(),
+            card: Card::new(),
             revealed: false,
-            fsrs_item: FSRSItem {
-                reviews: Vec::new(),
-            },
-            last_review: None,
         }
     }
 }
 
-impl Card {
+impl Leaf {
     pub fn new(front: &str, back: &str) -> Self {
         Self {
-            front: front.to_string(),
-            back: back.to_string(),
+            quiz: front.to_string(),
+            answer: back.to_string(),
             ..Default::default()
         }
     }
 
-    pub fn review(&mut self, rating: u32, now: DateTime<Utc>) {
-        if let Some(review_time) = self.last_review {
-            let delta_t = (now - review_time).num_days() as u32;
-            let review = FSRSReview { rating, delta_t };
-
-            self.fsrs_item.reviews.push(review);
-        }
-
-        self.last_review = Some(now);
+    pub fn review(&mut self, config: Config, rating: Rating, now: DateTime<Utc>) {
+        let scheduled_cards = config.fsrs.schedule(self.card.clone(), now);
+        self.card = scheduled_cards.select_card(rating);
     }
 
-    pub fn front(&self) -> String {
-        self.front.clone()
+    pub fn quiz(&self) -> String {
+        self.quiz.clone()
     }
 
-    pub fn back(&self) -> String {
-        self.back.clone()
+    pub fn answer(&self) -> String {
+        self.answer.clone()
     }
 
-    pub fn set_front(&mut self, front: &str) {
-        self.front = front.to_string();
+    pub fn set_quiz(&mut self, front: &str) {
+        self.quiz = front.to_string();
     }
 
-    pub fn set_back(&mut self, back: &str) {
-        self.back = back.to_string();
+    pub fn set_answer(&mut self, back: &str) {
+        self.answer = back.to_string();
     }
 }

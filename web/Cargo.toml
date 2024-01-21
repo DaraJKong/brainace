@@ -5,6 +5,10 @@ edition = "2021"
 license = "MIT"
 description = "Spaced repetition app for efficient organization and mastery of knowledge"
 
+[dependencies.brainace_core]
+version = "0.0.0"
+path = "../core"
+
 [dependencies]
 dioxus = { version = "*" }
 dioxus-fullstack = { version = "*" }

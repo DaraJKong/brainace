@@ -6,6 +6,6 @@ edition = "2021"
 license = "BSD-3-Clause"
 
 [dependencies]
-fsrs = { git = "https://github.com/open-spaced-repetition/fsrs-rs.git" }
+fsrs = { git = "https://github.com/open-spaced-repetition/rs-fsrs.git", features = ["serde"] }
 chrono = { version = "0.4.31", features = ["serde"] }
 serde = "1.0.195"
