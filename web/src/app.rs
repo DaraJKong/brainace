@@ -1,4 +1,5 @@
 use leptos::{view, IntoView};
+use leptos_meta::{provide_meta_context, Link, Stylesheet};
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
@@ -18,7 +19,11 @@ pub mod ssr {
 }
 
 pub fn App() -> impl IntoView {
+    provide_meta_context();
+
     view! {
-        <h1>Hello, World!</h1>
+        <Link rel="shortcut icon" type_="image/ico" href="/favicon.ico"/>
+        <Stylesheet id="leptos" href="/pkg/brainace_web.css"/>
+        <h1 class="bg-slate-900 text-emerald-500">Hello, World!</h1>
     }
 }
