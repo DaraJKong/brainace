@@ -5,6 +5,9 @@ edition = "2021"
 license = "MIT"
 description = "Spaced repetition app for efficient organization and mastery of knowledge"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies.brainace_core]
 version = "0.0.0"
 path = "../core"

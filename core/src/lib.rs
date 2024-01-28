@@ -22,7 +22,7 @@ impl Stem {
     }
 }
 
-#[derive(PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Leaf {
     quiz: String,
     answer: String,

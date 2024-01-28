@@ -8,13 +8,13 @@ use axum::{
 };
 use axum_session::{SessionConfig, SessionLayer, SessionStore};
 use axum_session_auth::{AuthConfig, AuthSessionLayer, SessionSqlitePool};
-use leptos::{get_configuration, logging::log, provide_context};
-use leptos_auth::{
+use brainace_web::{
+    app::*,
     auth::{ssr::AuthSession, User},
     fallback::file_and_error_handler,
     state::AppState,
-    todo::*,
 };
+use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
@@ -48,7 +48,7 @@ async fn leptos_routes_handler(
             provide_context(auth_session.clone());
             provide_context(app_state.pool.clone());
         },
-        TodoApp,
+        App,
     );
     handler(req).await.into_response()
 }
@@ -58,7 +58,7 @@ async fn main() {
     simple_logger::init_with_level(log::Level::Info).expect("couldn't initialize logging");
 
     let pool = SqlitePoolOptions::new()
-        .connect("sqlite:../Brainace.db")
+        .connect("sqlite:db/Brainace.db")
         .await
         .expect("Could not make pool.");
 
@@ -70,7 +70,7 @@ async fn main() {
             .await
             .unwrap();
 
-    if let Err(e) = sqlx::migrate!().run(&pool).await {
+    if let Err(e) = sqlx::migrate!("../db/migrations").run(&pool).await {
         eprintln!("{e:?}");
     }
 
@@ -78,7 +78,7 @@ async fn main() {
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
-    let routes = generate_route_list(TodoApp);
+    let routes = generate_route_list(App);
 
     let app_state = AppState {
         leptos_options,
