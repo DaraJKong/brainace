@@ -6,6 +6,3 @@ members = [
   "web"
 ]
 resolver = "2"
-
-[patch.'https://github.com/open-spaced-repetition/rs-fsrs']
-fsrs = { path = "../rs-fsrs", features = ["serde"] }
