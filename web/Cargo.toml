@@ -46,7 +46,7 @@ bcrypt = { version = "0.15", optional = true }
 async-trait = { version = "0.1", optional = true }
 
 [features]
-default = ["ssr", "hydrate"]
+default = []
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
 	"dep:axum",

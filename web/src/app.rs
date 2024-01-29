@@ -45,13 +45,9 @@ pub fn App() -> impl IntoView {
 
     let login_section = move || {
         user.get().map(|user| match user {
-            Err(e) => view! {
-                <LoginSection/>
-            }
+            Err(e) => view! { <LoginSection/> }
             .into_view(),
-            Ok(None) => view! {
-                <LoginSection/>
-            }
+            Ok(None) => view! { <LoginSection/> }
             .into_view(),
             Ok(Some(user)) => view! {
                 <ActionForm action=logout>
@@ -73,11 +69,12 @@ pub fn App() -> impl IntoView {
                         <img src="/Brainace_Banner_Dark.svg" class="h-full"/>
                     </A>
                     <div class="h-full flex items-center float-right space-x-4">
-                        <Transition fallback=move || view! { "Loading..." }>
-                            {login_section}
-                        </Transition>
+                        <Transition fallback=move || {
+                            view! { "Loading..." }
+                        }>{login_section}</Transition>
                     </div>
                 </header>
+
                 <main class="container h-full mx-auto py-4">
                     <Routes>
                         <Route path="" view=HelloWorld/>
@@ -92,9 +89,7 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn HelloWorld() -> impl IntoView {
-    view! {
-        <h1 class="text-6xl text-bold text-violet-400">"Hello, World!"</h1>
-    }
+    view! { <h1 class="text-6xl text-bold text-violet-400">"Hello, World!"</h1> }
 }
 
 #[component]
@@ -104,17 +99,11 @@ fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
             <h1>"Log In"</h1>
             <label>
                 "Username:"
-                <input
-                    type="text"
-                    placeholder="Username"
-                    maxlength="32"
-                    name="username"
-                />
+                <input type="text" placeholder="Username" maxlength="32" name="username"/>
             </label>
             <br/>
             <label>
-                "Password:"
-                <input type="password" placeholder="Password" name="password"/>
+                "Password:" <input type="password" placeholder="Password" name="password"/>
             </label>
             <br/>
             <label>
@@ -122,9 +111,7 @@ fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
                 "Remember me?"
             </label>
             <br/>
-            <button type="submit">
-                "Log In"
-            </button>
+            <button type="submit">"Log In"</button>
         </ActionForm>
     }
 }
@@ -136,35 +123,21 @@ fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
             <h1>"Sign Up"</h1>
             <label>
                 "Username:"
-                <input
-                    type="text"
-                    placeholder="Username"
-                    maxlength="32"
-                    name="username"
-                />
+                <input type="text" placeholder="Username" maxlength="32" name="username"/>
             </label>
             <br/>
             <label>
-                "Password:"
-                <input type="password" placeholder="Password" name="password"/>
+                "Password:" <input type="password" placeholder="Password" name="password"/>
             </label>
             <br/>
             <label>
                 "Confirm Password:"
-                <input
-                    type="password"
-                    placeholder="Password again"
-                    name="password_confirmation"
-                />
+                <input type="password" placeholder="Password again" name="password_confirmation"/>
             </label>
             <br/>
-            <label>
-                "Remember me?" <input type="checkbox" name="remember"/>
-            </label>
+            <label>"Remember me?" <input type="checkbox" name="remember"/></label>
             <br/>
-            <button type="submit">
-                "Sign Up"
-            </button>
+            <button type="submit">"Sign Up"</button>
         </ActionForm>
     }
 }
@@ -183,6 +156,8 @@ fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
     let msg = msg.to_string();
 
     view! {
-        <A href=href class="px-4 py-2 rounded-md bg-violet-500 text-white hover:bg-violet-400">{msg}</A>
+        <A href=href class="px-4 py-2 rounded-md bg-violet-500 text-white hover:bg-violet-400">
+            {msg}
+        </A>
     }
 }
