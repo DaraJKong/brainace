@@ -46,13 +46,11 @@ pub fn App() -> impl IntoView {
     let login_section = move || {
         user.get().map(|user| match user {
             Err(e) => view! {
-                <A href="/signup">"Signup"</A>
-                <A href="/login">"Login"</A>
+                <LoginSection/>
             }
             .into_view(),
             Ok(None) => view! {
-                <A href="/signup">"Signup"</A>
-                <A href="/login">"Login"</A>
+                <LoginSection/>
             }
             .into_view(),
             Ok(Some(user)) => view! {
@@ -70,13 +68,15 @@ pub fn App() -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/brainace_web.css"/>
         <Router>
             <body class="bg-gray-870">
-                <header class="flex h-20 px-8 py-4 items-center border-b-2 border-gray-750">
-                    <A href="/" class="h-full">
+                <header class="h-24 px-8 py-4 border-b-2 border-gray-750">
+                    <A href="/" class="float-left h-full">
                         <img src="/Brainace_Banner_Dark.svg" class="h-full"/>
                     </A>
-                    <Transition fallback=move || view! { "Loading..." }>
-                        {login_section}
-                    </Transition>
+                    <div class="h-full flex items-center float-right space-x-4">
+                        <Transition fallback=move || view! { "Loading..." }>
+                            {login_section}
+                        </Transition>
+                    </div>
                 </header>
                 <main class="container h-full mx-auto py-4">
                     <Routes>
@@ -166,5 +166,23 @@ fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
                 "Sign Up"
             </button>
         </ActionForm>
+    }
+}
+
+#[component]
+fn LoginSection() -> impl IntoView {
+    view! {
+        <ActionA href="/signup" msg="Sign Up"/>
+        <ActionA href="/login" msg="Log In"/>
+    }
+}
+
+#[component]
+fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
+    let href = href.to_string();
+    let msg = msg.to_string();
+
+    view! {
+        <A href=href class="px-4 py-2 rounded-md bg-violet-500 text-white hover:bg-violet-400">{msg}</A>
     }
 }
