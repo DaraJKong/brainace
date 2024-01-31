@@ -110,3 +110,17 @@ pub fn FormSubmit<'a>(msg: &'a str) -> impl IntoView {
         </button>
     }
 }
+
+#[component]
+pub fn FormAction<'a>(msg: &'a str) -> impl IntoView {
+    let msg = msg.to_string();
+
+    view! {
+        <button
+            type="submit"
+            class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+        >
+            {msg}
+        </button>
+    }
+}
