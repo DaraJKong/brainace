@@ -1,0 +1,6 @@
+[[language]]
+name = "rust"
+
+[language-server.rust-analyzer.config]
+# Enable all crate features while analyzing
+cargo.features = "all"
