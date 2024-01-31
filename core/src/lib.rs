@@ -1,6 +1,10 @@
+pub mod auth;
+
 use chrono::{DateTime, Utc};
 use fsrs::{Card, Rating, FSRS};
 use serde::{Deserialize, Serialize};
+
+use auth::User;
 
 #[derive(Default)]
 pub struct Config {
@@ -9,66 +13,90 @@ pub struct Config {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Stem {
-    pub name: String,
-    pub leaves: Vec<Leaf>,
+    name: String,
+    leaves: Vec<Leaf>,
 }
 
 impl Stem {
-    pub fn new(name: &str) -> Stem {
-        Stem {
+    pub fn new(name: &str) -> Self {
+        Self {
             name: name.to_string(),
             leaves: Vec::new(),
         }
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Leaf {
-    quiz: String,
-    answer: String,
+    id: u32,
+    user: Option<User>,
+    front: String,
+    back: String,
+    created_at: DateTime<Utc>,
     card: Card,
-    #[serde(skip)]
-    pub revealed: bool,
-}
-
-impl Default for Leaf {
-    fn default() -> Self {
-        Self {
-            quiz: String::new(),
-            answer: String::new(),
-            card: Card::new(),
-            revealed: false,
-        }
-    }
 }
 
 impl Leaf {
-    pub fn new(front: &str, back: &str) -> Self {
+    pub fn new(front: &str, back: &str, now: DateTime<Utc>) -> Self {
         Self {
-            quiz: front.to_string(),
-            answer: back.to_string(),
+            front: front.to_string(),
+            back: back.to_string(),
+            created_at: now,
             ..Default::default()
         }
     }
 
-    pub fn review(&mut self, config: Config, rating: Rating, now: DateTime<Utc>) {
+    pub fn review(&mut self, config: &Config, rating: Rating, now: DateTime<Utc>) {
         let scheduled_cards = config.fsrs.schedule(self.card.clone(), now);
         self.card = scheduled_cards.select_card(rating);
     }
 
-    pub fn quiz(&self) -> String {
-        self.quiz.clone()
+    pub fn front(&self) -> String {
+        self.front.clone()
     }
 
-    pub fn answer(&self) -> String {
-        self.answer.clone()
+    pub fn back(&self) -> String {
+        self.back.clone()
     }
 
-    pub fn set_quiz(&mut self, front: &str) {
-        self.quiz = front.to_string();
+    pub const fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
     }
 
-    pub fn set_answer(&mut self, back: &str) {
-        self.answer = back.to_string();
+    pub fn set_front(&mut self, front: &str) {
+        self.front = front.to_string();
+    }
+
+    pub fn set_back(&mut self, back: &str) {
+        self.back = back.to_string();
     }
 }
+
+cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
+    use sqlx::SqlitePool;
+
+    #[derive(sqlx::FromRow)]
+    pub struct SqlLeaf {
+        id: u32,
+        user_id: i64,
+        front: String,
+        back: String,
+        created_at: String,
+        card: Card,
+    }
+
+    impl SqlLeaf {
+        pub async fn into_leaf(self, pool: &SqlitePool) -> Leaf {
+            Leaf {
+                id: self.id,
+                user: User::get(self.user_id, pool).await,
+                front: self.front,
+                back: self.back,
+                created_at: DateTime::parse_from_str(&self.created_at, "")
+                    .unwrap()
+                    .into(),
+                card: self.card,
+            }
+        }
+    }
+}}

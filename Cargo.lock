@@ -521,9 +521,14 @@ dependencies = [
 name = "brainace_core"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum_session_auth",
+ "cfg-if",
  "chrono",
  "fsrs",
  "serde",
+ "sqlx",
 ]
 
 [[package]]

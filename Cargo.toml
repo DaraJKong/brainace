@@ -6,3 +6,13 @@ members = [
   "web"
 ]
 resolver = "2"
+
+[workspace.dependencies]
+anyhow = "1.0"
+serde = "1.0"
+sqlx = "0.7"
+axum = "0.7"
+axum_session = "0.12"
+axum_session_auth = "0.12"
+async-trait = "0.1"
+cfg-if = "1.0.0"

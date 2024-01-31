@@ -8,12 +8,8 @@ use axum::{
 };
 use axum_session::{SessionConfig, SessionLayer, SessionStore};
 use axum_session_auth::{AuthConfig, AuthSessionLayer, SessionSqlitePool};
-use brainace_web::{
-    app::*,
-    auth::{ssr::AuthSession, User},
-    fallback::file_and_error_handler,
-    state::AppState,
-};
+use brainace_core::auth::{AuthSession, User};
+use brainace_web::{app::*, fallback::file_and_error_handler, state::AppState};
 use leptos::{get_configuration, logging::log, provide_context};
 use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};

@@ -1,3 +1,4 @@
+use brainace_core::auth::User;
 use leptos::{
     component, create_resource, create_server_action, view, Action, AttributeValue, Children,
     IntoView, Resource, ServerFnError, SignalGet, Transition,
@@ -5,11 +6,11 @@ use leptos::{
 use leptos_meta::{provide_meta_context, Link, Stylesheet, Title};
 use leptos_router::{ActionForm, Route, Router, Routes, A};
 
-use crate::auth::{get_user, Login, Logout, Signup, User};
+use crate::auth::{get_user, Login, Logout, Signup};
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
-    use crate::auth::ssr::AuthSession;
+    use brainace_core::auth::AuthSession;
     use leptos::{use_context, ServerFnError};
     use sqlx::SqlitePool;
 
@@ -153,7 +154,7 @@ fn LoginSection(
 
     let login_section = move || {
         user.get().map(|user| match user {
-            Err(e) => login_signup_buttons.into_view(),
+            Err(_) => login_signup_buttons.into_view(),
             Ok(None) => login_signup_buttons.into_view(),
             Ok(Some(user)) => view! {
                 <p class="text-2xl text-white">{user.username}</p>
