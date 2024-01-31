@@ -124,7 +124,7 @@ pub fn App() -> impl IntoView {
                     </header>
                     <main class="flex-1 container mx-auto py-8">
                         <Routes>
-                            <Route path="" view=HelloWorld/>
+                            <Route path="" view=Leaves/>
                             <Route path="/login" view=move || view! { <Login action=login/> }/>
                             <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                         </Routes>
@@ -136,7 +136,7 @@ pub fn App() -> impl IntoView {
 }
 
 #[component]
-fn HelloWorld() -> impl IntoView {
+fn Leaves() -> impl IntoView {
     let add_leaf = create_server_multi_action::<AddLeaf>();
     let delete_leaf = create_server_action::<DeleteLeaf>();
     let submissions = add_leaf.submissions();
@@ -171,7 +171,7 @@ fn HelloWorld() -> impl IntoView {
                                         }
                                         Ok(leaves) => {
                                             if leaves.is_empty() {
-                                                view! { <p>"No tasks were found."</p> }.into_view()
+                                                view! { <p>"No leaves were found."</p> }.into_view()
                                             } else {
                                                 leaves
                                                     .into_iter()
