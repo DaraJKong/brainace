@@ -1,11 +1,13 @@
 pub mod app;
-pub mod auth;
 pub mod error_template;
 pub mod errors;
 #[cfg(feature = "ssr")]
 pub mod fallback;
+pub mod garden;
 #[cfg(feature = "ssr")]
 pub mod state;
+pub mod ui;
+pub mod users;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
