@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS users (
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    username   TEXT NOT NULL UNIQUE,
+    password   TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id    INTEGER NOT NULL,
+    token      TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS leaves (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    front      TEXT NOT NULL,
+    back       TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    card       TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
