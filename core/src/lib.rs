@@ -1,7 +1,8 @@
 pub mod auth;
 
 use chrono::{DateTime, Utc};
-use fsrs::{Card, Rating, FSRS};
+pub use fsrs::Card;
+use fsrs::{Rating, FSRS};
 use serde::{Deserialize, Serialize};
 
 use auth::User;
@@ -32,7 +33,7 @@ pub struct Leaf {
     user: Option<User>,
     front: String,
     back: String,
-    created_at: DateTime<Utc>,
+    created_at: String,
     card: Card,
 }
 
@@ -41,7 +42,7 @@ impl Leaf {
         Self {
             front: front.to_string(),
             back: back.to_string(),
-            created_at: now,
+            created_at: now.to_string(),
             ..Default::default()
         }
     }
@@ -49,6 +50,14 @@ impl Leaf {
     pub fn review(&mut self, config: &Config, rating: Rating, now: DateTime<Utc>) {
         let scheduled_cards = config.fsrs.schedule(self.card.clone(), now);
         self.card = scheduled_cards.select_card(rating);
+    }
+
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn user(&self) -> Option<User> {
+        self.user.clone()
     }
 
     pub fn front(&self) -> String {
@@ -59,8 +68,8 @@ impl Leaf {
         self.back.clone()
     }
 
-    pub const fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
+    pub fn created_at(&self) -> String {
+        self.created_at.clone()
     }
 
     pub fn set_front(&mut self, front: &str) {
@@ -75,14 +84,14 @@ impl Leaf {
 cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
     use sqlx::SqlitePool;
 
-    #[derive(sqlx::FromRow)]
+    #[derive(sqlx::FromRow, Clone)]
     pub struct SqlLeaf {
         id: u32,
         user_id: i64,
         front: String,
         back: String,
         created_at: String,
-        card: Card,
+        card: sqlx::types::Json<Card>,
     }
 
     impl SqlLeaf {
@@ -92,10 +101,8 @@ cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
                 user: User::get(self.user_id, pool).await,
                 front: self.front,
                 back: self.back,
-                created_at: DateTime::parse_from_str(&self.created_at, "")
-                    .unwrap()
-                    .into(),
-                card: self.card,
+                created_at: self.created_at,
+                card: self.card.0
             }
         }
     }

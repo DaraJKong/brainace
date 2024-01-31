@@ -66,7 +66,7 @@ async fn main() {
             .await
             .unwrap();
 
-    if let Err(e) = sqlx::migrate!("../db/migrations").run(&pool).await {
+    if let Err(e) = sqlx::migrate!("../migrations").run(&pool).await {
         eprintln!("{e:?}");
     }
 

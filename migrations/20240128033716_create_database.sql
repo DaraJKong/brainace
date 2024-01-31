@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS leaves (
     front      TEXT NOT NULL,
     back       TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    card       TEXT NOT NULL,
+    card       JSONB NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
