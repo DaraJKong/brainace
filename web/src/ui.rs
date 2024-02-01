@@ -1,4 +1,5 @@
 use leptos::{component, view, AttributeValue, Children, IntoView};
+use leptos_icons::*;
 use leptos_router::A;
 
 #[component]
@@ -77,20 +78,10 @@ pub fn FormCheckbox<'a>(label: &'a str, name: &'a str) -> impl IntoView {
                     name=name
                     class="appearance-none relative peer size-5 shrink-0 rounded border-2 border-gray-630 checked:bg-violet-400 checked:border-0 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
                 />
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    stroke="currentColor"
-                    class="absolute size-5 hidden peer-checked:block pointer-events-none outline-none"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m4.5 12.75 6 6 9-13.5"
-                    ></path>
-                </svg>
+                <Icon
+                    icon=icondata::FaCheckSolid
+                    class="absolute size-5 scale-90 hidden peer-checked:block pointer-events-none outline-none"
+                />
                 <span class="ml-2">{label}</span>
             </label>
         </div>

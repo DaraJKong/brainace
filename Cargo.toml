@@ -16,3 +16,6 @@ axum_session = "0.12"
 axum_session_auth = "0.12"
 async-trait = "0.1"
 cfg-if = "1.0.0"
+
+[patch.crates-io]
+leptos_icons = { git = "https://github.com/DaraJKong/leptos-icons.git" }
