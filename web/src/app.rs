@@ -48,7 +48,7 @@ pub fn App() -> impl IntoView {
         <Link rel="shortcut icon" type_="image/ico" href="/Brainace_Icon_Dark.ico"/>
         <Stylesheet id="leptos" href="/pkg/brainace_web.css"/>
         <Router>
-            <html class="h-screen">
+            <html class="h-screen" lang="en">
                 <body class="flex h-full flex-col bg-gray-870">
                     <header class="h-24 px-8 py-4 border-b-2 border-gray-750">
                         <A href="/" class="float-left h-full focus:outline-none">

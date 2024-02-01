@@ -1,4 +1,5 @@
 use brainace_core::Leaf;
+use icondata as i;
 use leptos::{
     component, create_resource, create_server_action, create_server_multi_action, create_signal,
     server, view, Action, ErrorBoundary, IntoView, ServerFnError, SignalUpdate, Transition,
@@ -139,7 +140,7 @@ pub fn Leaves() -> impl IntoView {
                                 .collect_view()
                         };
                         view! {
-                            <ul class="flex flex-col space-y-4">
+                            <ul class="flex flex-col space-y-6">
                                 {existing_leaves} {pending_leaves}
                             </ul>
                         }
@@ -160,23 +161,26 @@ pub fn Leaf(
 
     view! {
         <Card class="mx-auto relative w-1/3">
-            <div class="p-4">
-                <p class="text-2xl text-center text-white">{leaf.front()}</p>
+            <div class="p-5">
+                <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
             </div>
             <div class=("hidden", hidden)>
                 <hr class="border-t-1 border-gray-750"/>
-                <div class="p-4">
-                    <p class="text-2xl text-center text-violet-500">{leaf.back()}</p>
+                <div class="p-5">
+                    <p class="text-2xl text-center text-violet-500 hyphens-auto">{leaf.back()}</p>
                 </div>
             </div>
-            <div class="absolute top-2 right-2 flex space-x-2">
-                <button on:click=move |_| { set_hidden.update(|x| *x = !*x) } class="text-white">
-                    <Icon icon=icondata::FaEyeRegular class="size-5"/>
+            <div class="absolute -top-4 right-4 flex rounded-xl bg-violet-600 overflow-hidden">
+                <button
+                    on:click=move |_| { set_hidden.update(|x| *x = !*x) }
+                    class="group size-8 p-1.5 text-white hover:bg-violet-500"
+                >
+                    <Icon icon=i::FaEyeRegular class="size-5 group-hover:scale-105"/>
                 </button>
-                <ActionForm action=delete_leaf>
+                <ActionForm action=delete_leaf class="group size-8 p-1.5 hover:bg-violet-500">
                     <input type="hidden" name="id" value=leaf.id()/>
                     <button type="submit" class="text-white">
-                        <Icon icon=icondata::FaTrashCanRegular class="size-5"/>
+                        <Icon icon=i::FaTrashCanRegular class="size-5 group-hover:scale-105"/>
                     </button>
                 </ActionForm>
             </div>
@@ -186,8 +190,6 @@ pub fn Leaf(
 
 #[component]
 pub fn PendingLeaf(leaf: Option<AddLeaf>) -> impl IntoView {
-    let (hidden, set_hidden) = create_signal(true);
-
     let text = leaf.map_or("LOADING".to_string(), |leaf| leaf.front);
 
     view! {
