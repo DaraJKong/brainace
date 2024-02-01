@@ -1,12 +1,14 @@
 use brainace_core::Leaf;
 use leptos::{
-    component, create_resource, create_server_action, create_server_multi_action, server, view,
-    ErrorBoundary, IntoView, ServerFnError, Transition,
+    component, create_resource, create_server_action, create_server_multi_action, create_signal,
+    server, view, Action, ErrorBoundary, IntoView, ServerFnError, SignalUpdate, Transition,
 };
 use leptos::{CollectView, SignalGet};
+use leptos_icons::Icon;
 use leptos_router::{ActionForm, MultiActionForm};
 
 use crate::error_template::ErrorTemplate;
+use crate::ui::Card;
 use crate::users::get_user;
 
 #[server(GetLeaves, "/api")]
@@ -111,13 +113,7 @@ pub fn Leaves() -> impl IntoView {
                                                     .map(move |leaf| {
                                                         view! {
                                                             <li>
-                                                                {leaf.front()} "|" {leaf.back()} ": Created at "
-                                                                {leaf.created_at()} " by "
-                                                                {leaf.user().unwrap_or_default().username}
-                                                                <ActionForm action=delete_leaf>
-                                                                    <input type="hidden" name="id" value=leaf.id()/>
-                                                                    <input type="submit" value="X"/>
-                                                                </ActionForm>
+                                                                <Leaf leaf=leaf delete_leaf=delete_leaf/>
                                                             </li>
                                                         }
                                                     })
@@ -135,18 +131,70 @@ pub fn Leaves() -> impl IntoView {
                                 .filter(|submission| submission.pending().get())
                                 .map(|submission| {
                                     view! {
-                                        <li class="pending">
-                                            {move || submission.input.get().map(|data| data.front)}
+                                        <li>
+                                            <PendingLeaf leaf=submission.input.get()/>
                                         </li>
                                     }
                                 })
                                 .collect_view()
                         };
-                        view! { <ul>{existing_leaves} {pending_leaves}</ul> }
+                        view! {
+                            <ul class="flex flex-col space-y-4">
+                                {existing_leaves} {pending_leaves}
+                            </ul>
+                        }
                     }}
 
                 </ErrorBoundary>
             </Transition>
         </div>
+    }
+}
+
+#[component]
+pub fn Leaf(
+    leaf: Leaf,
+    delete_leaf: Action<DeleteLeaf, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    let (hidden, set_hidden) = create_signal(true);
+
+    view! {
+        <Card class="mx-auto relative w-1/3">
+            <div class="p-4">
+                <p class="text-2xl text-center text-white">{leaf.front()}</p>
+            </div>
+            <div class=("hidden", hidden)>
+                <hr class="border-t-1 border-gray-750"/>
+                <div class="p-4">
+                    <p class="text-2xl text-center text-violet-500">{leaf.back()}</p>
+                </div>
+            </div>
+            <div class="absolute top-2 right-2 flex space-x-2">
+                <button on:click=move |_| { set_hidden.update(|x| *x = !*x) } class="text-white">
+                    <Icon icon=icondata::FaEyeRegular class="size-5"/>
+                </button>
+                <ActionForm action=delete_leaf>
+                    <input type="hidden" name="id" value=leaf.id()/>
+                    <button type="submit" class="text-white">
+                        <Icon icon=icondata::FaTrashCanRegular class="size-5"/>
+                    </button>
+                </ActionForm>
+            </div>
+        </Card>
+    }
+}
+
+#[component]
+pub fn PendingLeaf(leaf: Option<AddLeaf>) -> impl IntoView {
+    let (hidden, set_hidden) = create_signal(true);
+
+    let text = leaf.map_or("LOADING".to_string(), |leaf| leaf.front);
+
+    view! {
+        <Card class="mx-auto relative w-1/3">
+            <div class="animate-pulse p-4">
+                <p class="text-2xl text-center text-gray-750">{text}</p>
+            </div>
+        </Card>
     }
 }
