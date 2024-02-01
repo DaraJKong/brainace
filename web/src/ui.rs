@@ -3,12 +3,11 @@ use leptos_icons::*;
 use leptos_router::A;
 
 #[component]
-pub fn Card(children: Children) -> impl IntoView {
-    view! {
-        <div class="mx-auto w-1/3 p-6 rounded-xl bg-gray-870 border border-gray-750 shadow-lg">
-            {children()}
-        </div>
-    }
+pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) -> impl IntoView {
+    let mut class = class.map_or(String::new(), |str| str.to_string());
+    class.push_str(" rounded-xl bg-gray-870 border border-gray-750 shadow-lg");
+
+    view! { <div class=class>{children()}</div> }
 }
 
 #[component]

@@ -14,7 +14,7 @@ mod ssr {
 #[component]
 pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <Card>
+        <Card class="mx-auto w-1/3 p-6">
             <ActionForm action=action>
                 <FormH1 text="Log in"/>
                 <FormInput
@@ -42,7 +42,7 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
 #[component]
 pub fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <Card>
+        <Card class="mx-auto w-1/3 p-6">
             <ActionForm action=action>
                 <FormH1 text="Create your account"/>
                 <FormInput
