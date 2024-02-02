@@ -3,7 +3,7 @@ use leptos_meta::{provide_meta_context, Link, Stylesheet, Title};
 use leptos_router::{Route, Router, Routes, A};
 
 use crate::{
-    garden::Leaves,
+    garden::Branches,
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
 
@@ -60,7 +60,7 @@ pub fn App() -> impl IntoView {
                     </header>
                     <main class="flex-1 container mx-auto py-8">
                         <Routes>
-                            <Route path="" view=Leaves/>
+                            <Route path="" view=Branches/>
                             <Route path="/login" view=move || view! { <Login action=login/> }/>
                             <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                         </Routes>
