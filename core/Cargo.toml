@@ -20,7 +20,7 @@ cfg-if.workspace = true
 
 [features]
 default = []
-ssr = [
+auth = [
   "dep:sqlx",
   "dep:axum_session_auth",
   "dep:async-trait",

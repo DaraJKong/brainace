@@ -52,7 +52,7 @@ async-trait = { workspace = true, optional = true }
 default = []
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
-	"brainace_core/ssr",
+	"brainace_core/auth",
 	"dep:axum",
 	"dep:tower",
 	"dep:tower-http",

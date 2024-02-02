@@ -22,7 +22,7 @@ impl Default for User {
     }
 }
 
-cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
+cfg_if::cfg_if! { if #[cfg(feature = "auth")] {
     use async_trait::async_trait;
     use axum_session_auth::{Authentication, HasPermission, SessionSqlitePool};
     use sqlx::SqlitePool;

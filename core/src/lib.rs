@@ -81,7 +81,7 @@ impl Leaf {
     }
 }
 
-cfg_if::cfg_if! { if #[cfg(feature = "ssr")] {
+cfg_if::cfg_if! { if #[cfg(feature = "auth")] {
     use sqlx::SqlitePool;
 
     #[derive(sqlx::FromRow, Clone)]
