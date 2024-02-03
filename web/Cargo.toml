@@ -18,10 +18,10 @@ console_log = "1.0"
 rand = { version = "0.8", features = ["min_const_gen"], optional = true }
 console_error_panic_hook = "0.1"
 futures = "0.3"
-leptos = { git = "https://github.com/leptos-rs/leptos.git" }
-leptos_meta = { git = "https://github.com/leptos-rs/leptos.git" }
+leptos = { git = "https://github.com/leptos-rs/leptos.git", features = ["nightly"] }
+leptos_meta = { git = "https://github.com/leptos-rs/leptos.git", features = ["nightly"] }
 leptos_axum = { git = "https://github.com/leptos-rs/leptos.git", optional = true }
-leptos_router = { git = "https://github.com/leptos-rs/leptos.git" }
+leptos_router = { git = "https://github.com/leptos-rs/leptos.git", features = ["nightly"] }
 leptos_icons = "0.3"
 icondata = "0.3"
 log = "0.4"
