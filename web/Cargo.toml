@@ -24,6 +24,7 @@ leptos_axum = { git = "https://github.com/leptos-rs/leptos.git", optional = true
 leptos_router = { git = "https://github.com/leptos-rs/leptos.git", features = ["nightly"] }
 leptos_icons = "0.3"
 icondata = "0.3"
+web-sys = "0.3"
 log = "0.4"
 simple_logger = "4.3"
 serde = { workspace = true, features = ["derive"] }

@@ -1,13 +1,106 @@
-use leptos::{component, view, AttributeValue, Children, IntoView};
+use icondata::Icon;
+use leptos::{
+    component,
+    ev::{MouseEvent, SubmitEvent},
+    event_target,
+    server_fn::{
+        client::Client, codec::PostUrl, error::NoCustomError, request::ClientReq, ServerFn,
+    },
+    view, Action, AttributeValue, Children, IntoView, ReadSignal, Serializable, ServerFnError,
+    SignalUpdate, WriteSignal,
+};
 use leptos_icons::*;
-use leptos_router::A;
+use leptos_router::{ActionForm, A};
+use serde::de::DeserializeOwned;
+use web_sys::Element;
 
 #[component]
 pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) -> impl IntoView {
-    let mut class = class.map_or(String::new(), |str| str.to_string());
-    class.push_str(" rounded-xl bg-gray-870 border border-gray-750 shadow-lg");
+    let classes = "rounded-xl bg-gray-870 border border-gray-750 shadow-lg";
+    let class = class.map_or(format!("{}", classes), |str| format!("{} {}", str, classes));
 
     view! { <div class=class>{children()}</div> }
+}
+
+#[component]
+pub fn Modal(
+    show: ReadSignal<bool>,
+    set_show: WriteSignal<bool>,
+    children: Children,
+) -> impl IntoView {
+    view! {
+        <div class:hidden=move || !show()>
+            <div class="fixed top-0 left-0 size-full bg-black opacity-25"></div>
+            <div
+                on:click=move |e| {
+                    if event_target::<Element>(&e.into()).closest("#modal").unwrap().is_none() {
+                        set_show.update(|x| *x = false);
+                    }
+                }
+
+                class="fixed top-0 left-0 size-full flex justify-center items-center"
+            >
+                <div id="modal" class="contents">
+                    {children()}
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn Controls<'a>(#[prop(optional)] class: Option<&'a str>, children: Children) -> impl IntoView {
+    let classes = "flex rounded-xl bg-violet-600 overflow-hidden";
+    let class = class.map_or(format!("{}", classes), |str| format!("{} {}", str, classes));
+
+    view! { <div class=class>{children()}</div> }
+}
+
+#[component]
+pub fn ControlBtn<F, 'a>(on_click: F, size: &'a str, icon: Icon) -> impl IntoView
+where
+    F: FnMut(MouseEvent) -> () + 'static,
+{
+    view! {
+        <button on:click=on_click class="group size-8 p-1.5 text-white hover:bg-violet-500">
+            <Icon icon=icon class=format!("size-{} group-hover:scale-105", size)/>
+        </button>
+    }
+}
+
+#[component]
+pub fn ControlAction<I, O, F, 'a>(
+    action: Action<I, Result<O, ServerFnError>>,
+    on_submit: F,
+    size: &'a str,
+    icon: Icon,
+    #[prop(optional)] children: Option<Children>,
+) -> impl IntoView
+where
+    F: FnMut(SubmitEvent) -> () + 'static,
+    I: Clone
+        + ServerFn<InputEncoding = PostUrl, Output = O, Error = NoCustomError>
+        + DeserializeOwned
+        + 'static,
+    O: Clone + Serializable + 'static,
+    <<<I as ServerFn>::Client as Client<<I as ServerFn>::Error>>::Request as ClientReq<
+        <I as ServerFn>::Error,
+    >>::FormData: From<web_sys::FormData>,
+{
+    let size = size.to_string();
+
+    view! {
+        <ActionForm
+            action=action
+            on:submit=on_submit
+            class="group size-8 p-1.5 hover:bg-violet-500"
+        >
+            {children.map(|children| children())}
+            <button type="submit" class="text-white">
+                <Icon icon=icon class=format!("size-{} group-hover:scale-105", size)/>
+            </button>
+        </ActionForm>
+    }
 }
 
 #[component]
@@ -102,15 +195,30 @@ pub fn FormSubmit<'a>(msg: &'a str) -> impl IntoView {
 }
 
 #[component]
-pub fn FormAction<'a>(msg: &'a str) -> impl IntoView {
+pub fn ServerAction<I, O, 'a>(
+    action: Action<I, Result<O, ServerFnError>>,
+    msg: &'a str,
+) -> impl IntoView
+where
+    I: Clone
+        + ServerFn<InputEncoding = PostUrl, Output = O, Error = NoCustomError>
+        + DeserializeOwned
+        + 'static,
+    O: Clone + Serializable + 'static,
+    <<<I as ServerFn>::Client as Client<<I as ServerFn>::Error>>::Request as ClientReq<
+        <I as ServerFn>::Error,
+    >>::FormData: From<web_sys::FormData>,
+{
     let msg = msg.to_string();
 
     view! {
-        <button
-            type="submit"
-            class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
-        >
-            {msg}
-        </button>
+        <ActionForm action=action>
+            <button
+                type="submit"
+                class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+            >
+                {msg}
+            </button>
+        </ActionForm>
     }
 }

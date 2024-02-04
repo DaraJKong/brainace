@@ -1,4 +1,4 @@
-use crate::ui::{ActionA, Card, FormAction, FormCheckbox, FormH1, FormInput, FormSubmit};
+use crate::ui::{ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, ServerAction};
 use brainace_core::auth::User;
 use leptos::{
     component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Transition,
@@ -92,9 +92,7 @@ pub fn LoginSection(
             Ok(None) => login_signup_buttons.into_view(),
             Ok(Some(user)) => view! {
                 <p class="text-2xl text-white">{user.username}</p>
-                <ActionForm action=logout>
-                    <FormAction msg="LOG OUT"/>
-                </ActionForm>
+                <ServerAction action=logout msg="LOG OUT"/>
             }
             .into_view(),
         })

@@ -1,16 +1,34 @@
 use brainace_core::{Branch, Leaf, Stem};
 use icondata as i;
 use leptos::{
-    component, create_resource, create_server_action, create_server_multi_action, create_signal,
-    server, view, Action, ErrorBoundary, IntoView, ServerFnError, SignalUpdate, Transition,
+    component, create_effect, create_resource, create_server_action, create_server_multi_action,
+    create_signal, server, view, Action, ErrorBoundary, IntoView, Params, ServerFnError,
+    SignalUpdate, SignalWith, Transition,
 };
 use leptos::{CollectView, SignalGet};
 use leptos_icons::Icon;
-use leptos_router::{ActionForm, MultiActionForm};
+use leptos_router::{use_navigate, use_params, ActionForm, MultiActionForm, Params, A};
 
 use crate::error_template::ErrorTemplate;
-use crate::ui::Card;
+use crate::ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal};
 use crate::users::get_user;
+
+#[server(GetBranch, "/api")]
+pub async fn get_branch(id: u32) -> Result<Branch, ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlBranch;
+
+    let pool = pool()?;
+
+    Ok(
+        sqlx::query_as::<_, SqlBranch>("SELECT * FROM branches WHERE id = ?")
+            .bind(id)
+            .fetch_one(&pool)
+            .await?
+            .into_branch(&pool)
+            .await,
+    )
+}
 
 #[server(GetBranches, "/api")]
 pub async fn get_branches() -> Result<Vec<Branch>, ServerFnError> {
@@ -50,8 +68,6 @@ pub async fn add_branch(name: String) -> Result<(), ServerFnError> {
         Some(user) => user.id,
         None => -1,
     };
-
-    log::info!("{:?}", id);
 
     Ok(
         sqlx::query("INSERT INTO branches (user_id, name) VALUES (?, ?)")
@@ -178,20 +194,35 @@ pub async fn delete_leaf(id: u32) -> Result<(), ServerFnError> {
 
 #[component]
 pub fn Branches() -> impl IntoView {
+    let (show_modal, set_show_modal) = create_signal(false);
+
     let add_branch = create_server_multi_action::<AddBranch>();
-    let delete_branch = create_server_action::<DeleteBranch>();
     let submissions = add_branch.submissions();
 
     let branches = create_resource(
-        move || (add_branch.version().get(), delete_branch.version().get()),
+        move || (add_branch.version().get()),
         move |_| get_branches(),
     );
 
     view! {
-        <MultiActionForm action=add_branch>
-            <label>"Name" <input type="text" name="name"/></label>
-            <input type="submit" value="Add"/>
-        </MultiActionForm>
+        <Modal show=show_modal set_show=set_show_modal>
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=add_branch
+                    on:submit=move |_| set_show_modal.update(|x| *x = false)
+                >
+                    <FormH1 text="Create a new branch"/>
+                    <FormInput
+                        input_type="text"
+                        id="Name"
+                        label="Name"
+                        placeholder="Name"
+                        name="name"
+                    />
+                    <FormSubmit msg="ADD"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
@@ -208,14 +239,17 @@ pub fn Branches() -> impl IntoView {
                                     }
                                     Ok(branches) => {
                                         if branches.is_empty() {
-                                            view! { <p>"No branches were found."</p> }.into_view()
+                                            view! {
+                                                <p class="text-xl text-white">"No branches were found."</p>
+                                            }
+                                                .into_view()
                                         } else {
                                             branches
                                                 .into_iter()
                                                 .map(move |branch| {
                                                     view! {
                                                         <li>
-                                                            <Branch branch=branch delete_branch=delete_branch/>
+                                                            <BranchOverview branch=branch/>
                                                         </li>
                                                     }
                                                 })
@@ -226,7 +260,7 @@ pub fn Branches() -> impl IntoView {
                                 .unwrap_or_default()
                         }
                     };
-                    let pending_leaves = move || {
+                    let pending_branches = move || {
                         submissions
                             .get()
                             .into_iter()
@@ -240,7 +274,87 @@ pub fn Branches() -> impl IntoView {
                             })
                             .collect_view()
                     };
-                    view! { <ul>{existing_branches} {pending_leaves}</ul> }
+                    view! {
+                        <ul class="flex flex-wrap items-center gap-6">
+                            {existing_branches} {pending_branches} <li>
+                                <button
+                                    on:click=move |_| set_show_modal.update(|x| *x = true)
+                                    class="block p-3 text-2xl text-white rounded-full bg-violet-600 hover:bg-violet-500 transition ease-out"
+                                >
+                                    <Icon icon=i::FaPlusSolid/>
+                                </button>
+                            </li>
+                        </ul>
+                    }
+                }}
+
+            </ErrorBoundary>
+        </Transition>
+    }
+}
+
+#[derive(Params, PartialEq)]
+struct BranchParams {
+    id: u32,
+}
+
+#[component]
+pub fn Branch() -> impl IntoView {
+    let (edit, set_edit) = create_signal(false);
+
+    let delete_branch = create_server_action::<DeleteBranch>();
+
+    let params = use_params::<BranchParams>();
+    let id =
+        move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
+
+    let branch = create_resource(id, get_branch);
+
+    view! {
+        <Transition fallback=move || {
+            view! { <p>"Loading..."</p> }
+        }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    branch
+                        .get()
+                        .map(move |branch| match branch {
+                            Err(e) => {
+                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
+                            }
+                            Ok(branch) => {
+                                view! {
+                                    <div class="flex items-center h-16 px-8 py-1 border-b-2 border-violet-500">
+                                        <p class="text-4xl font-bold text-white tracking-wide">
+                                            {branch.name()}
+                                        </p>
+                                        <div class="grow"></div>
+                                        <Controls>
+                                            <ControlBtn
+                                                on_click=move |_| set_edit.update(|x| *x = true)
+                                                size="5"
+                                                icon=i::FaPlusSolid
+                                            />
+                                            <ControlAction
+                                                action=delete_branch
+                                                on_submit=move |_| {
+                                                    use_navigate()("/", Default::default());
+                                                }
+
+                                                size="5"
+                                                icon=i::FaTrashCanRegular
+                                            >
+                                                <input type="hidden" name="id" value=id/>
+                                            </ControlAction>
+                                        </Controls>
+                                    </div>
+                                }
+                                    .into_view()
+                            }
+                        })
+                        .unwrap_or_default()
                 }}
 
             </ErrorBoundary>
@@ -249,18 +363,14 @@ pub fn Branches() -> impl IntoView {
 }
 
 #[component]
-pub fn Branch(
-    branch: Branch,
-    delete_branch: Action<DeleteBranch, Result<(), ServerFnError>>,
-) -> impl IntoView {
+pub fn BranchOverview(branch: Branch) -> impl IntoView {
     view! {
-        <p class="text-2xl text-white">{branch.name()}</p>
-        <ActionForm action=delete_branch>
-            <input type="hidden" name="id" value=branch.id()/>
-            <button type="submit" class="text-white">
-                <Icon icon=i::FaTrashCanRegular/>
-            </button>
-        </ActionForm>
+        <A
+            href=format!("/branch/{}", branch.id())
+            class="block py-6 px-9 text-2xl text-white rounded-xl outline outline-2 outline-gray-750 hover:outline-violet-500 hover:scale-105 transition ease-out"
+        >
+            {branch.name()}
+        </A>
     }
 }
 
@@ -268,7 +378,20 @@ pub fn Branch(
 pub fn PendingBranch(input: Option<AddBranch>) -> impl IntoView {
     let text = input.map_or("LOADING".to_string(), |input| input.name);
 
-    view! { <p>{text}</p> }
+    view! {
+        <div class="block py-6 px-9 rounded-xl border-2 border-gray-750">
+            <p class="text-2xl text-gray-750 animate-pulse">{text}</p>
+        </div>
+    }
+}
+
+#[component]
+pub fn NoBranch() -> impl IntoView {
+    view! {
+        <p class="text-xl text-white">
+            "No branch selected. You need to log in and navigate to one of your branches."
+        </p>
+    }
 }
 
 #[component]
