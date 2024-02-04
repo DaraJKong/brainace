@@ -49,7 +49,7 @@ pub fn FormInput<'a>(
 
     view! {
         <div class="mb-4">
-            <label for=id.clone() class="block mb-2 text-lg text-bold text-white">
+            <label for=id.clone() class="block mb-2 text-lg font-bold text-white">
                 {label}
             </label>
             <input
@@ -71,7 +71,7 @@ pub fn FormCheckbox<'a>(label: &'a str, name: &'a str) -> impl IntoView {
 
     view! {
         <div class="flex spacing-x-10 mb-6">
-            <label class="flex items-center text-lg text-bold text-white">
+            <label class="flex items-center text-lg font-bold text-white">
                 <input
                     type="checkbox"
                     name=name
