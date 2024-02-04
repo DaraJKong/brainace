@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS branches (
     user_id    INTEGER NOT NULL,
     name       TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK(name <> ""),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
