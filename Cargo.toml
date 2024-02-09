@@ -19,3 +19,9 @@ cfg-if = "1.0.0"
 
 [patch.crates-io]
 leptos_icons = { git = "https://github.com/DaraJKong/leptos-icons.git" }
+
+# [patch."https://github.com/leptos-rs/leptos"]
+# leptos = { path = "../leptos/leptos" }
+# leptos_meta = { path = "../leptos/meta" }
+# leptos_router = { path = "../leptos/router" }
+# leptos_axum = { path = "../leptos/integrations/axum" }
