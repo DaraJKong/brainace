@@ -205,7 +205,11 @@ pub fn Branches() -> impl IntoView {
     );
 
     view! {
-        <Modal show=show_modal set_show=set_show_modal>
+        <Modal
+            id="add_branch_modal"
+            show=show_modal
+            on_blur=move |_| set_show_modal.update(|x| *x = false)
+        >
             <Card class="w-1/3 p-6">
                 <MultiActionForm
                     action=add_branch

@@ -23,24 +23,32 @@ pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) ->
 }
 
 #[component]
-pub fn Modal(
+pub fn Modal<'a, F: Fn(MouseEvent) + 'static>(
+    id: &'a str,
     show: ReadSignal<bool>,
-    set_show: WriteSignal<bool>,
+    on_blur: F,
     children: Children,
 ) -> impl IntoView {
+    let id = id.to_string();
+    let selector = format!("#{id}");
+
     view! {
         <div class:hidden=move || !show()>
             <div class="fixed top-0 left-0 size-full bg-black opacity-25"></div>
             <div
                 on:click=move |e| {
-                    if event_target::<Element>(&e.into()).closest("#modal").unwrap().is_none() {
-                        set_show.update(|x| *x = false);
+                    if event_target::<Element>(&e.clone().into())
+                        .closest(&selector)
+                        .unwrap()
+                        .is_none()
+                    {
+                        on_blur(e);
                     }
                 }
 
                 class="fixed top-0 left-0 size-full flex justify-center items-center"
             >
-                <div id="modal" class="contents">
+                <div id=id class="contents">
                     {children()}
                 </div>
             </div>
