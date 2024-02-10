@@ -495,20 +495,21 @@ pub fn Leaf(
                     <p class="text-2xl text-center text-violet-500 hyphens-auto">{leaf.back()}</p>
                 </div>
             </div>
-            <div class="absolute -top-4 right-4 flex rounded-xl bg-violet-600 overflow-hidden">
-                <button
-                    on:click=move |_| { set_hidden.update(|x| *x = !*x) }
-                    class="group size-8 p-1.5 text-white hover:bg-violet-500"
+            <Controls class="absolute -top-4 right-4">
+                <ControlBtn
+                    on_click=move |_| { set_hidden.update(|x| *x = !*x) }
+                    size="5"
+                    icon=i::FaEyeRegular
+                />
+                <ControlAction
+                    action=delete_leaf
+                    on_submit=move |_| {}
+                    size="5"
+                    icon=i::FaTrashCanRegular
                 >
-                    <Icon icon=i::FaEyeRegular class="size-5 group-hover:scale-105"/>
-                </button>
-                <ActionForm action=delete_leaf class="group size-8 p-1.5 hover:bg-violet-500">
                     <input type="hidden" name="id" value=leaf.id()/>
-                    <button type="submit" class="text-white">
-                        <Icon icon=i::FaTrashCanRegular class="size-5 group-hover:scale-105"/>
-                    </button>
-                </ActionForm>
-            </div>
+                </ControlAction>
+            </Controls>
         </Card>
     }
 }
