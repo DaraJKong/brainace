@@ -62,8 +62,6 @@ pub async fn add_branch(name: String) -> Result<(), ServerFnError> {
     let user = get_user().await?;
     let pool = pool()?;
 
-    log::info!("{:?}", user);
-
     let id = match user {
         Some(user) => user.id,
         None => -1,

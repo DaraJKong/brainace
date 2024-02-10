@@ -162,7 +162,7 @@ pub async fn signup(
 
     let password_hashed = hash(password, DEFAULT_COST).unwrap();
 
-    sqlx::query("INSERT INTO users (username, password) VALUES (?,?)")
+    sqlx::query("INSERT INTO users (username, password) VALUES (?, ?)")
         .bind(username.clone())
         .bind(password_hashed)
         .execute(&pool)

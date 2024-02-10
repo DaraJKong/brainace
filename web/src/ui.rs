@@ -7,7 +7,6 @@ use leptos::{
         client::Client, codec::PostUrl, error::NoCustomError, request::ClientReq, ServerFn,
     },
     view, Action, AttributeValue, Children, IntoView, ReadSignal, Serializable, ServerFnError,
-    SignalUpdate, WriteSignal,
 };
 use leptos_icons::*;
 use leptos_router::{ActionForm, A};
@@ -67,7 +66,7 @@ pub fn Controls<'a>(#[prop(optional)] class: Option<&'a str>, children: Children
 #[component]
 pub fn ControlBtn<F, 'a>(on_click: F, size: &'a str, icon: Icon) -> impl IntoView
 where
-    F: FnMut(MouseEvent) -> () + 'static,
+    F: FnMut(MouseEvent) + 'static,
 {
     view! {
         <button on:click=on_click class="group size-8 p-1.5 text-white hover:bg-violet-500">
@@ -77,7 +76,7 @@ where
 }
 
 #[component]
-pub fn ControlAction<I, O, F, 'a>(
+pub fn ControlAction<'a, I, O, F>(
     action: Action<I, Result<O, ServerFnError>>,
     on_submit: F,
     size: &'a str,
@@ -85,7 +84,6 @@ pub fn ControlAction<I, O, F, 'a>(
     #[prop(optional)] children: Option<Children>,
 ) -> impl IntoView
 where
-    F: FnMut(SubmitEvent) -> () + 'static,
     I: Clone
         + ServerFn<InputEncoding = PostUrl, Output = O, Error = NoCustomError>
         + DeserializeOwned
@@ -94,6 +92,7 @@ where
     <<<I as ServerFn>::Client as Client<<I as ServerFn>::Error>>::Request as ClientReq<
         <I as ServerFn>::Error,
     >>::FormData: From<web_sys::FormData>,
+    F: FnMut(SubmitEvent) + 'static,
 {
     let size = size.to_string();
 
