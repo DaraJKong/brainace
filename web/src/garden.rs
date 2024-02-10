@@ -427,9 +427,7 @@ pub fn Leaves(stem_id: u32) -> impl IntoView {
                                     .get()
                                     .map(move |leaves| match leaves {
                                         Err(e) => {
-                                            view! {
-                                                <pre class="error">"Server Error: " {e.to_string()}</pre>
-                                            }
+                                            view! { <pre>"Server Error: " {e.to_string()}</pre> }
                                                 .into_view()
                                         }
                                         Ok(leaves) => {
