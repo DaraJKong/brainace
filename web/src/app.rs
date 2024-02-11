@@ -3,7 +3,10 @@ use leptos_meta::{provide_meta_context, Body, Html, Link, Stylesheet, Title};
 use leptos_router::{Route, Router, Routes, A};
 
 use crate::{
-    garden::{Branch, Branches, NoBranch, NoStem, Stem},
+    garden::{
+        branch::{Branch, Branches, NoBranch},
+        stem::{NoStem, Stem},
+    },
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
 
