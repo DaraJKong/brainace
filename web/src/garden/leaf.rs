@@ -104,7 +104,7 @@ pub fn Leaves(
                                                 .map(move |leaf| {
                                                     view! {
                                                         <li>
-                                                            <Leaf leaf=leaf delete_leaf=delete_leaf/>
+                                                            <LeafOverview leaf=leaf delete_leaf=delete_leaf/>
                                                         </li>
                                                     }
                                                 })
@@ -140,7 +140,7 @@ pub fn Leaves(
 }
 
 #[component]
-pub fn Leaf(
+pub fn LeafOverview(
     leaf: Leaf,
     delete_leaf: Action<DeleteLeaf, Result<(), ServerFnError>>,
 ) -> impl IntoView {
