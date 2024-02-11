@@ -3,7 +3,7 @@ use leptos_meta::{provide_meta_context, Body, Html, Link, Stylesheet, Title};
 use leptos_router::{Route, Router, Routes, A};
 
 use crate::{
-    garden::{Branch, Branches, NoBranch},
+    garden::{Branch, Branches, NoBranch, NoStem, Stem},
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
 
@@ -63,6 +63,8 @@ pub fn App() -> impl IntoView {
                     <Route path="" view=Branches/>
                     <Route path="/branch" view=NoBranch/>
                     <Route path="/branch/:id" view=Branch/>
+                    <Route path="/stem" view=NoStem/>
+                    <Route path="/stem/:id" view=Stem/>
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                 </Routes>

@@ -45,6 +45,14 @@ impl Stem {
             ..Default::default()
         }
     }
+
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 #[derive(Default, Clone, Serialize, Deserialize)]

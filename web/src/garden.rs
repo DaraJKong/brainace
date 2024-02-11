@@ -1,13 +1,13 @@
 use brainace_core::{Branch, Leaf, Stem};
 use icondata as i;
 use leptos::{
-    component, create_effect, create_resource, create_server_action, create_server_multi_action,
-    create_signal, server, view, Action, ErrorBoundary, IntoView, Params, ServerFnError,
+    component, create_resource, create_server_action, create_server_multi_action, create_signal,
+    server, view, Action, ErrorBoundary, IntoView, MultiAction, Params, ServerFnError,
     SignalUpdate, SignalWith, Transition,
 };
 use leptos::{CollectView, SignalGet};
 use leptos_icons::Icon;
-use leptos_router::{use_navigate, use_params, ActionForm, MultiActionForm, Params, A};
+use leptos_router::{use_navigate, use_params, MultiActionForm, Params, A};
 
 use crate::error_template::ErrorTemplate;
 use crate::ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal};
@@ -77,6 +77,20 @@ pub async fn add_branch(name: String) -> Result<(), ServerFnError> {
     )
 }
 
+#[server(EditBranch, "/api")]
+pub async fn edit_branch(id: u32, name: String) -> Result<(), ServerFnError> {
+    use crate::app::ssr::pool;
+
+    let pool = pool()?;
+
+    Ok(sqlx::query("UPDATE branches SET name = $2 WHERE id = $1")
+        .bind(id)
+        .bind(name)
+        .execute(&pool)
+        .await
+        .map(|_| ())?)
+}
+
 #[server(DeleteBranch, "/api")]
 pub async fn delete_branch(id: u32) -> Result<(), ServerFnError> {
     use crate::app::ssr::pool;
@@ -88,6 +102,22 @@ pub async fn delete_branch(id: u32) -> Result<(), ServerFnError> {
         .execute(&pool)
         .await
         .map(|_| ())?)
+}
+
+#[server(GetStem, "/api")]
+pub async fn get_stem(id: u32) -> Result<Stem, ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlStem;
+
+    let pool = pool()?;
+
+    Ok(
+        sqlx::query_as::<_, SqlStem>("SELECT * FROM stems WHERE id = ?")
+            .bind(id)
+            .fetch_one(&pool)
+            .await?
+            .into_stem(),
+    )
 }
 
 #[server(GetStems, "/api")]
@@ -122,6 +152,20 @@ pub async fn add_stem(branch_id: u32, name: String) -> Result<(), ServerFnError>
             .await
             .map(|_| ())?,
     )
+}
+
+#[server(EditStem, "/api")]
+pub async fn edit_stem(id: u32, name: String) -> Result<(), ServerFnError> {
+    use crate::app::ssr::pool;
+
+    let pool = pool()?;
+
+    Ok(sqlx::query("UPDATE stems SET name = $2 WHERE id = $1")
+        .bind(id)
+        .bind(name)
+        .execute(&pool)
+        .await
+        .map(|_| ())?)
 }
 
 #[server(DeleteStem, "/api")]
@@ -203,28 +247,6 @@ pub fn Branches() -> impl IntoView {
     );
 
     view! {
-        <Modal
-            id="add_branch_modal"
-            show=show_modal
-            on_blur=move |_| set_show_modal.update(|x| *x = false)
-        >
-            <Card class="w-1/3 p-6">
-                <MultiActionForm
-                    action=add_branch
-                    on:submit=move |_| set_show_modal.update(|x| *x = false)
-                >
-                    <FormH1 text="Create a new branch"/>
-                    <FormInput
-                        input_type="text"
-                        id="Name"
-                        label="Name"
-                        placeholder="Name"
-                        name="name"
-                    />
-                    <FormSubmit msg="ADD"/>
-                </MultiActionForm>
-            </Card>
-        </Modal>
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
@@ -292,6 +314,28 @@ pub fn Branches() -> impl IntoView {
 
             </ErrorBoundary>
         </Transition>
+        <Modal
+            id="add_branch_modal"
+            show=show_modal
+            on_blur=move |_| set_show_modal.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=add_branch
+                    on:submit=move |_| set_show_modal.update(|x| *x = false)
+                >
+                    <FormH1 text="Create a new branch"/>
+                    <FormInput
+                        input_type="text"
+                        id="Name"
+                        label="Name"
+                        placeholder="Name"
+                        name="name"
+                    />
+                    <FormSubmit msg="ADD"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
     }
 }
 
@@ -302,15 +346,21 @@ struct BranchParams {
 
 #[component]
 pub fn Branch() -> impl IntoView {
-    let (edit, set_edit) = create_signal(false);
+    let (editing, set_editing) = create_signal(false);
+    let (adding_stem, set_adding_stem) = create_signal(false);
 
+    let edit_branch = create_server_multi_action::<EditBranch>();
     let delete_branch = create_server_action::<DeleteBranch>();
+    let add_stem = create_server_multi_action::<AddStem>();
 
     let params = use_params::<BranchParams>();
     let id =
         move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
 
-    let branch = create_resource(id, get_branch);
+    let branch = create_resource(
+        move || (id(), edit_branch.version().get()),
+        move |_| get_branch(id()),
+    );
 
     view! {
         <Transition fallback=move || {
@@ -328,14 +378,19 @@ pub fn Branch() -> impl IntoView {
                             }
                             Ok(branch) => {
                                 view! {
-                                    <div class="flex items-center h-16 px-8 py-1 border-b-2 border-violet-500">
+                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-violet-500">
                                         <p class="text-4xl font-bold text-white tracking-wide">
                                             {branch.name()}
                                         </p>
                                         <div class="grow"></div>
                                         <Controls>
                                             <ControlBtn
-                                                on_click=move |_| set_edit.update(|x| *x = true)
+                                                on_click=move |_| set_editing.update(|x| *x = true)
+                                                size="5"
+                                                icon=i::FaPencilSolid
+                                            />
+                                            <ControlBtn
+                                                on_click=move |_| set_adding_stem.update(|x| *x = true)
                                                 size="5"
                                                 icon=i::FaPlusSolid
                                             />
@@ -352,6 +407,7 @@ pub fn Branch() -> impl IntoView {
                                             </ControlAction>
                                         </Controls>
                                     </div>
+                                    <Stems branch_id=id() add_stem=add_stem/>
                                 }
                                     .into_view()
                             }
@@ -361,6 +417,52 @@ pub fn Branch() -> impl IntoView {
 
             </ErrorBoundary>
         </Transition>
+        <Modal
+            id="edit_branch_modal"
+            show=editing
+            on_blur=move |_| set_editing.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=edit_branch
+                    on:submit=move |_| set_editing.update(|x| *x = false)
+                >
+                    <FormH1 text="Editing branch"/>
+                    <input type="hidden" name="id" value=id/>
+                    <FormInput
+                        input_type="text"
+                        id="Name"
+                        label="Name"
+                        placeholder="Name"
+                        name="name"
+                    />
+                    <FormSubmit msg="SAVE"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
+        <Modal
+            id="add_stem_modal"
+            show=adding_stem
+            on_blur=move |_| set_adding_stem.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=add_stem
+                    on:submit=move |_| set_adding_stem.update(|x| *x = false)
+                >
+                    <FormH1 text="Grow a stem"/>
+                    <input type="hidden" name="branch_id" value=id/>
+                    <FormInput
+                        input_type="text"
+                        id="Name"
+                        label="Name"
+                        placeholder="Name"
+                        name="name"
+                    />
+                    <FormSubmit msg="ADD"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
     }
 }
 
@@ -397,9 +499,267 @@ pub fn NoBranch() -> impl IntoView {
 }
 
 #[component]
-pub fn Leaves(stem_id: u32) -> impl IntoView {
+pub fn Stems(
+    branch_id: u32,
+    add_stem: MultiAction<AddStem, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    let delete_stem = create_server_action::<DeleteStem>();
+
+    let submissions = add_stem.submissions();
+
+    let stems = create_resource(
+        move || (add_stem.version().get(), delete_stem.version().get()),
+        move |_| get_stems(branch_id),
+    );
+
+    view! {
+        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    let existing_stems = move || {
+                        stems
+                            .get()
+                            .map(|stems| match stems {
+                                Err(e) => {
+                                    view! { <pre>"Server Error: " {e.to_string()}</pre> }
+                                        .into_view()
+                                }
+                                Ok(stems) => {
+                                    if stems.is_empty() {
+                                        view! {
+                                            <p class="text-2xl text-white">"No stems were found."</p>
+                                        }
+                                            .into_view()
+                                    } else {
+                                        stems
+                                            .into_iter()
+                                            .map(|stem| {
+                                                view! {
+                                                    <li>
+                                                        <StemOverview stem=stem delete_stem=delete_stem/>
+                                                    </li>
+                                                }
+                                            })
+                                            .collect_view()
+                                    }
+                                }
+                            })
+                    };
+                    let pending_stems = move || {
+                        submissions
+                            .get()
+                            .into_iter()
+                            .filter(|submission| submission.pending().get())
+                            .map(|submission| {
+                                view! {
+                                    <li>
+                                        <PendingStem input=submission.input.get()/>
+                                    </li>
+                                }
+                            })
+                            .collect_view()
+                    };
+                    view! {
+                        <ul class="flex flex-col space-y-8">{existing_stems} {pending_stems}</ul>
+                    }
+                }}
+
+            </ErrorBoundary>
+        </Transition>
+    }
+}
+
+#[derive(Params, PartialEq)]
+struct StemParams {
+    id: u32,
+}
+
+#[component]
+pub fn Stem() -> impl IntoView {
+    let (editing, set_editing) = create_signal(false);
+    let (adding_leaf, set_adding_leaf) = create_signal(false);
+
+    let edit_stem = create_server_multi_action::<EditStem>();
+    let delete_stem = create_server_action::<DeleteStem>();
     let add_leaf = create_server_multi_action::<AddLeaf>();
+
+    let params = use_params::<StemParams>();
+    let id =
+        move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
+
+    let stem = create_resource(
+        move || (id(), edit_stem.version().get()),
+        move |_| get_stem(id()),
+    );
+
+    view! {
+        <Transition fallback=move || {
+            view! { <p>"Loading..."</p> }
+        }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    stem.get()
+                        .map(move |stem| match stem {
+                            Err(e) => {
+                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
+                            }
+                            Ok(stem) => {
+                                view! {
+                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-violet-500">
+                                        <p class="text-4xl font-bold text-white tracking-wide">
+                                            {stem.name()}
+                                        </p>
+                                        <div class="grow"></div>
+                                        <Controls>
+                                            <ControlBtn
+                                                on_click=move |_| set_editing.update(|x| *x = true)
+                                                size="5"
+                                                icon=i::FaPencilSolid
+                                            />
+                                            <ControlBtn
+                                                on_click=move |_| set_adding_leaf.update(|x| *x = true)
+                                                size="5"
+                                                icon=i::FaPlusSolid
+                                            />
+                                            <ControlAction
+                                                action=delete_stem
+                                                on_submit=move |_| {
+                                                    use_navigate()("/", Default::default());
+                                                }
+
+                                                size="5"
+                                                icon=i::FaTrashCanRegular
+                                            >
+                                                <input type="hidden" name="id" value=id/>
+                                            </ControlAction>
+                                        </Controls>
+                                    </div>
+                                    <Leaves stem_id=id() add_leaf=add_leaf/>
+                                }
+                                    .into_view()
+                            }
+                        })
+                        .unwrap_or_default()
+                }}
+
+            </ErrorBoundary>
+        </Transition>
+        <Modal
+            id="edit_stem_modal"
+            show=editing
+            on_blur=move |_| set_editing.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=edit_stem
+                    on:submit=move |_| set_editing.update(|x| *x = false)
+                >
+                    <FormH1 text="Editing stem"/>
+                    <input type="hidden" name="id" value=id/>
+                    <FormInput
+                        input_type="text"
+                        id="Name"
+                        label="Name"
+                        placeholder="Name"
+                        name="name"
+                    />
+                    <FormSubmit msg="SAVE"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
+        <Modal
+            id="add_leaf_modal"
+            show=adding_leaf
+            on_blur=move |_| set_adding_leaf.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=add_leaf
+                    on:submit=move |_| set_adding_leaf.update(|x| *x = false)
+                >
+                    <FormH1 text="Grow a leaf"/>
+                    <input type="hidden" name="stem_id" value=id/>
+                    <FormInput
+                        input_type="text"
+                        id="Front"
+                        label="Front"
+                        placeholder="Front"
+                        name="front"
+                    />
+                    <FormInput
+                        input_type="text"
+                        id="Back"
+                        label="Back"
+                        placeholder="Back"
+                        name="back"
+                    />
+                    <FormSubmit msg="ADD"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
+    }
+}
+
+#[component]
+pub fn StemOverview(
+    stem: Stem,
+    delete_stem: Action<DeleteStem, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    let id = stem.id();
+
+    view! {
+        <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-violet-500 transition ease-out">
+            <A href=format!("/stem/{}", id) class="block p-5">
+                <p class="text-2xl text-center text-white hyphens-auto">{stem.name()}</p>
+            </A>
+            <Controls class="absolute -top-4 right-4">
+                <ControlBtn on_click=move |_| {} size="5" icon=i::FaPencilSolid/>
+                <ControlAction
+                    action=delete_stem
+                    on_submit=move |_| {}
+                    size="5"
+                    icon=i::FaTrashCanRegular
+                >
+                    <input type="hidden" name="id" value=id/>
+                </ControlAction>
+            </Controls>
+        </Card>
+    }
+}
+
+#[component]
+pub fn PendingStem(input: Option<AddStem>) -> impl IntoView {
+    let text = input.map_or("LOADING".to_string(), |input| input.name);
+
+    view! {
+        <Card class="mx-auto relative w-1/3">
+            <div class="animate-pulse p-4">
+                <p class="text-2xl text-center text-gray-750">{text}</p>
+            </div>
+        </Card>
+    }
+}
+
+#[component]
+pub fn NoStem() -> impl IntoView {
+    view! {
+        <p class="text-xl text-white">
+            "No stem selected. You need to log in and navigate to one of your stems."
+        </p>
+    }
+}
+
+#[component]
+pub fn Leaves(
+    stem_id: u32,
+    add_leaf: MultiAction<AddLeaf, Result<(), ServerFnError>>,
+) -> impl IntoView {
     let delete_leaf = create_server_action::<DeleteLeaf>();
+
     let submissions = add_leaf.submissions();
 
     let leaves = create_resource(
@@ -408,70 +768,64 @@ pub fn Leaves(stem_id: u32) -> impl IntoView {
     );
 
     view! {
-        <div>
-            <MultiActionForm action=add_leaf>
-                <label>"Front" <input type="text" name="front"/></label>
-                <label>"Back" <input type="text" name="back"/></label>
-                <input type="submit" value="Add"/>
-            </MultiActionForm>
-            <Transition fallback=move || view! { <p>"Loading..."</p> }>
-                <ErrorBoundary fallback=|errors| {
-                    view! { <ErrorTemplate errors=errors/> }
-                }>
-                    {move || {
-                        let existing_leaves = {
-                            move || {
-                                leaves
-                                    .get()
-                                    .map(move |leaves| match leaves {
-                                        Err(e) => {
-                                            view! { <pre>"Server Error: " {e.to_string()}</pre> }
-                                                .into_view()
-                                        }
-                                        Ok(leaves) => {
-                                            if leaves.is_empty() {
-                                                view! { <p>"No leaves were found."</p> }.into_view()
-                                            } else {
-                                                leaves
-                                                    .into_iter()
-                                                    .map(move |leaf| {
-                                                        view! {
-                                                            <li>
-                                                                <Leaf leaf=leaf delete_leaf=delete_leaf/>
-                                                            </li>
-                                                        }
-                                                    })
-                                                    .collect_view()
-                                            }
-                                        }
-                                    })
-                                    .unwrap_or_default()
-                            }
-                        };
-                        let pending_leaves = move || {
-                            submissions
+        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    let existing_leaves = {
+                        move || {
+                            leaves
                                 .get()
-                                .into_iter()
-                                .filter(|submission| submission.pending().get())
-                                .map(|submission| {
-                                    view! {
-                                        <li>
-                                            <PendingLeaf input=submission.input.get()/>
-                                        </li>
+                                .map(move |leaves| match leaves {
+                                    Err(e) => {
+                                        view! { <pre>"Server Error: " {e.to_string()}</pre> }
+                                            .into_view()
+                                    }
+                                    Ok(leaves) => {
+                                        if leaves.is_empty() {
+                                            view! {
+                                                <p class="text-2xl text-white">"No leaves were found."</p>
+                                            }
+                                                .into_view()
+                                        } else {
+                                            leaves
+                                                .into_iter()
+                                                .map(move |leaf| {
+                                                    view! {
+                                                        <li>
+                                                            <Leaf leaf=leaf delete_leaf=delete_leaf/>
+                                                        </li>
+                                                    }
+                                                })
+                                                .collect_view()
+                                        }
                                     }
                                 })
-                                .collect_view()
-                        };
-                        view! {
-                            <ul class="flex flex-col space-y-6">
-                                {existing_leaves} {pending_leaves}
-                            </ul>
+                                .unwrap_or_default()
                         }
-                    }}
+                    };
+                    let pending_leaves = move || {
+                        submissions
+                            .get()
+                            .into_iter()
+                            .filter(|submission| submission.pending().get())
+                            .map(|submission| {
+                                view! {
+                                    <li>
+                                        <PendingLeaf input=submission.input.get()/>
+                                    </li>
+                                }
+                            })
+                            .collect_view()
+                    };
+                    view! {
+                        <ul class="flex flex-col space-y-6">{existing_leaves} {pending_leaves}</ul>
+                    }
+                }}
 
-                </ErrorBoundary>
-            </Transition>
-        </div>
+            </ErrorBoundary>
+        </Transition>
     }
 }
 
