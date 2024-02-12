@@ -1,7 +1,7 @@
 use super::i;
 use crate::{
     error_template::ErrorTemplate,
-    garden::leaf::{AddLeaf, Leaves},
+    garden::leaf::{get_leaves, AddLeaf, DeleteLeaf, Leaves},
     ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
 };
 use brainace_core::Stem;
@@ -175,6 +175,7 @@ pub fn Stem() -> impl IntoView {
     let edit_stem = create_server_multi_action::<EditStem>();
     let delete_stem = create_server_action::<DeleteStem>();
     let add_leaf = create_server_multi_action::<AddLeaf>();
+    let delete_leaf = create_server_action::<DeleteLeaf>();
 
     let params = use_params::<StemParams>();
     let id =
@@ -184,6 +185,12 @@ pub fn Stem() -> impl IntoView {
         move || (id(), edit_stem.version().get()),
         move |_| get_stem(id()),
     );
+
+    let leaves = create_resource(
+        move || (add_leaf.version().get(), delete_leaf.version().get()),
+        move |_| get_leaves(id()),
+    );
+    let submissions = add_leaf.submissions();
 
     view! {
         <Transition fallback=move || {
@@ -229,7 +236,11 @@ pub fn Stem() -> impl IntoView {
                                             </ControlAction>
                                         </Controls>
                                     </div>
-                                    <Leaves stem_id=id() add_leaf=add_leaf/>
+                                    <Leaves
+                                        leaves=leaves
+                                        delete_leaf=delete_leaf
+                                        submissions=submissions
+                                    />
                                 }
                                     .into_view()
                             }

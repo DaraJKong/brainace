@@ -5,8 +5,8 @@ use crate::{
 };
 use brainace_core::Leaf;
 use leptos::{
-    component, create_resource, create_server_action, create_signal, server, view, Action,
-    CollectView, ErrorBoundary, IntoView, MultiAction, ServerFnError, SignalGet, SignalUpdate,
+    component, create_signal, leptos_server::Submission, server, view, Action, CollectView,
+    ErrorBoundary, IntoView, ReadSignal, Resource, ServerFnError, SignalGet, SignalUpdate,
     Transition,
 };
 
@@ -65,18 +65,10 @@ pub async fn delete_leaf(id: u32) -> Result<(), ServerFnError> {
 
 #[component]
 pub fn Leaves(
-    stem_id: u32,
-    add_leaf: MultiAction<AddLeaf, Result<(), ServerFnError>>,
+    leaves: Resource<(usize, usize), Result<Vec<Leaf>, ServerFnError>>,
+    delete_leaf: Action<DeleteLeaf, Result<(), ServerFnError>>,
+    submissions: ReadSignal<Vec<Submission<AddLeaf, Result<(), ServerFnError>>>>,
 ) -> impl IntoView {
-    let delete_leaf = create_server_action::<DeleteLeaf>();
-
-    let submissions = add_leaf.submissions();
-
-    let leaves = create_resource(
-        move || (add_leaf.version().get(), delete_leaf.version().get()),
-        move |_| get_leaves(stem_id),
-    );
-
     view! {
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <ErrorBoundary fallback=|errors| {
@@ -104,7 +96,7 @@ pub fn Leaves(
                                                 .map(move |leaf| {
                                                     view! {
                                                         <li>
-                                                            <LeafOverview leaf=leaf delete_leaf=delete_leaf/>
+                                                            <LeafOverview leaf delete_leaf/>
                                                         </li>
                                                     }
                                                 })
