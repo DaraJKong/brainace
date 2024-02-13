@@ -1,7 +1,7 @@
 use crate::ui::{ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, ServerAction};
 use brainace_core::auth::User;
 use leptos::{
-    component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Transition,
+    component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Suspense,
 };
 use leptos_router::ActionForm;
 
@@ -9,100 +9,6 @@ use leptos_router::ActionForm;
 mod ssr {
     pub use crate::app::ssr::{auth, pool};
     pub use bcrypt::{hash, verify, DEFAULT_COST};
-}
-
-#[component]
-pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
-    view! {
-        <Card class="mx-auto w-1/3 p-6">
-            <ActionForm action=action>
-                <FormH1 text="Log in"/>
-                <FormInput
-                    input_type="text"
-                    id="username"
-                    label="Username"
-                    placeholder="Username"
-                    name="username"
-                    maxlength="32"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password"
-                    label="Password"
-                    placeholder="Password"
-                    name="password"
-                />
-                <FormCheckbox label="Remember me?" name="remember"/>
-                <FormSubmit msg="LOG IN"/>
-            </ActionForm>
-        </Card>
-    }
-}
-
-#[component]
-pub fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
-    view! {
-        <Card class="mx-auto w-1/3 p-6">
-            <ActionForm action=action>
-                <FormH1 text="Create your account"/>
-                <FormInput
-                    input_type="text"
-                    id="username"
-                    label="Username"
-                    placeholder="Username"
-                    name="username"
-                    maxlength="32"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password"
-                    label="Password"
-                    placeholder="Password"
-                    name="password"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password_confirmation"
-                    label="Confirm Password"
-                    placeholder="Password again"
-                    name="password_confirmation"
-                />
-                <FormCheckbox label="Remember me?" name="remember"/>
-                <FormSubmit msg="SIGN UP"/>
-            </ActionForm>
-        </Card>
-    }
-}
-
-#[component]
-pub fn LoginSection(
-    user: Resource<(usize, usize, usize), Result<Option<User>, ServerFnError>>,
-    logout: Action<Logout, Result<(), ServerFnError>>,
-) -> impl IntoView {
-    let login_signup_buttons = move || {
-        view! {
-            <ActionA href="/signup" msg="SIGN UP"/>
-            <ActionA href="/login" msg="LOG IN"/>
-        }
-    };
-
-    let login_section = move || {
-        user.get().map(|user| match user {
-            Err(_) => login_signup_buttons.into_view(),
-            Ok(None) => login_signup_buttons.into_view(),
-            Ok(Some(user)) => view! {
-                <p class="text-2xl text-white">{user.username}</p>
-                <ServerAction action=logout msg="LOG OUT"/>
-            }
-            .into_view(),
-        })
-    };
-
-    view! {
-        <Transition fallback=move || {
-            view! { "Loading..." }
-        }>{login_section}</Transition>
-    }
 }
 
 #[server]
@@ -190,4 +96,100 @@ pub async fn logout() -> Result<(), ServerFnError> {
     leptos_axum::redirect("/");
 
     Ok(())
+}
+
+#[component]
+pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
+    view! {
+        <Card class="mx-auto w-1/3 p-6">
+            <ActionForm action=action>
+                <FormH1 text="Log in"/>
+                <FormInput
+                    input_type="text"
+                    id="username"
+                    label="Username"
+                    placeholder="Username"
+                    name="username"
+                    maxlength="32"
+                />
+                <FormInput
+                    input_type="password"
+                    id="password"
+                    label="Password"
+                    placeholder="Password"
+                    name="password"
+                />
+                <FormCheckbox label="Remember me?" name="remember"/>
+                <FormSubmit msg="LOG IN"/>
+            </ActionForm>
+        </Card>
+    }
+}
+
+#[component]
+pub fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
+    view! {
+        <Card class="mx-auto w-1/3 p-6">
+            <ActionForm action=action>
+                <FormH1 text="Create your account"/>
+                <FormInput
+                    input_type="text"
+                    id="username"
+                    label="Username"
+                    placeholder="Username"
+                    name="username"
+                    maxlength="32"
+                />
+                <FormInput
+                    input_type="password"
+                    id="password"
+                    label="Password"
+                    placeholder="Password"
+                    name="password"
+                />
+                <FormInput
+                    input_type="password"
+                    id="password_confirmation"
+                    label="Confirm Password"
+                    placeholder="Password again"
+                    name="password_confirmation"
+                />
+                <FormCheckbox label="Remember me?" name="remember"/>
+                <FormSubmit msg="SIGN UP"/>
+            </ActionForm>
+        </Card>
+    }
+}
+
+#[component]
+pub fn LoginSection(
+    user: Resource<(usize, usize, usize), Result<Option<User>, ServerFnError>>,
+    logout: Action<Logout, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    let login_signup_buttons = move || {
+        view! {
+            <ActionA href="/signup" msg="SIGN UP"/>
+            <ActionA href="/login" msg="LOG IN"/>
+        }
+    };
+
+    view! {
+        <Suspense>
+            {move || {
+                user.get()
+                    .map(|user| match user {
+                        Err(_) => login_signup_buttons.into_view(),
+                        Ok(None) => login_signup_buttons.into_view(),
+                        Ok(Some(user)) => {
+                            view! {
+                                <p class="text-2xl text-white">{user.username}</p>
+                                <ServerAction action=logout msg="LOG OUT"/>
+                            }
+                                .into_view()
+                        }
+                    })
+            }}
+
+        </Suspense>
+    }
 }
