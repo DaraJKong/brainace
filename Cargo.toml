@@ -10,6 +10,7 @@ resolver = "2"
 [workspace.dependencies]
 anyhow = "1.0"
 serde = "1.0"
+chrono = "0.4"
 sqlx = "0.7"
 axum = "0.7"
 axum_session = "0.12"

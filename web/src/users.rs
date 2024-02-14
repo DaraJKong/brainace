@@ -183,6 +183,7 @@ pub fn LoginSection(
                         Ok(Some(user)) => {
                             view! {
                                 <p class="text-2xl text-white">{user.username}</p>
+                                <ActionA href="/review" msg="REVIEW ALL"/>
                                 <ServerAction action=logout msg="LOG OUT"/>
                             }
                                 .into_view()

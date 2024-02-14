@@ -16,6 +16,7 @@ path = "../core"
 anyhow.workspace = true
 console_log = "1.0"
 rand = { version = "0.8", features = ["min_const_gen"], optional = true }
+chrono.workspace = true
 console_error_panic_hook = "0.1"
 futures = "0.3"
 leptos = { git = "https://github.com/leptos-rs/leptos.git", features = ["nightly"] }

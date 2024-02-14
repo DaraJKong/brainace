@@ -2,13 +2,44 @@ use super::i;
 use crate::{
     error_template::ErrorTemplate,
     ui::{Card, ControlAction, ControlBtn, Controls},
+    users::get_user,
 };
-use brainace_core::Leaf;
+use brainace_core::{Config, Leaf, Rating};
+use chrono::DateTime;
 use leptos::{
     component, create_signal, leptos_server::Submission, server, view, Action, CollectView,
     ErrorBoundary, IntoView, ReadSignal, Resource, ServerFnError, SignalGet, SignalUpdate,
     Transition,
 };
+
+#[server(GetAllLeaves, "/api")]
+pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlLeaf;
+
+    let user = get_user().await?;
+    let pool = pool()?;
+
+    let id = match user {
+        Some(user) => user.id,
+        None => -1,
+    };
+
+    Ok(sqlx::query_as::<_, SqlLeaf>(
+        "SELECT * FROM leaves l
+            INNER JOIN stems s
+                ON s.id = l.stem_id
+            INNER JOIN branches b
+                ON b.id = s.branch_id
+                AND b.user_id = ?",
+    )
+    .bind(id)
+    .fetch_all(&pool)
+    .await?
+    .iter()
+    .map(|leaf| leaf.into_leaf())
+    .collect())
+}
 
 #[server(GetLeaves, "/api")]
 pub async fn get_leaves(stem_id: u32) -> Result<Vec<Leaf>, ServerFnError> {
@@ -48,6 +79,36 @@ pub async fn add_leaf(stem_id: u32, front: String, back: String) -> Result<(), S
             .await
             .map(|_| ())?,
     )
+}
+
+#[server(ReviewLeaf, "/api")]
+pub async fn review_leaf(id: u32, rating: Rating, now: i64) -> Result<(), ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlLeaf;
+
+    let pool = pool()?;
+
+    let mut leaf = sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE id = ?")
+        .bind(id)
+        .fetch_one(&pool)
+        .await?
+        .into_leaf();
+
+    let config = Config::default();
+    let now = DateTime::from_timestamp_millis(now).unwrap();
+
+    leaf.review(&config, rating, now);
+
+    let card_json: sqlx::types::Json<brainace_core::Card> =
+        sqlx::types::Json::decode_from_string(&serde_json::to_string(leaf.card()).unwrap())
+            .unwrap();
+
+    Ok(sqlx::query("UPDATE leaves SET card = $2 WHERE id = $1")
+        .bind(leaf.id())
+        .bind(card_json)
+        .execute(&pool)
+        .await
+        .map(|_| ())?)
 }
 
 #[server(DeleteLeaf, "/api")]
@@ -128,6 +189,23 @@ pub fn Leaves(
 
             </ErrorBoundary>
         </Transition>
+    }
+}
+
+#[component]
+pub fn Leaf(leaf: Leaf, revealed: ReadSignal<bool>) -> impl IntoView {
+    view! {
+        <Card class="mx-auto relative w-1/3">
+            <div class="p-5">
+                <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
+            </div>
+            <div class=("hidden", move || !revealed())>
+                <hr class="border-t-1 border-gray-750"/>
+                <div class="p-5">
+                    <p class="text-2xl text-center text-violet-500 hyphens-auto">{leaf.back()}</p>
+                </div>
+            </div>
+        </Card>
     }
 }
 

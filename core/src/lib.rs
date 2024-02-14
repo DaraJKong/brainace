@@ -1,8 +1,9 @@
 pub mod auth;
 
+pub use fsrs::{Card, Rating};
+
 use chrono::{DateTime, Utc};
-pub use fsrs::Card;
-use fsrs::{Rating, FSRS};
+use fsrs::FSRS;
 use serde::{Deserialize, Serialize};
 
 use auth::User;
@@ -98,6 +99,10 @@ impl Leaf {
 
     pub fn created_at(&self) -> String {
         self.created_at.clone()
+    }
+
+    pub fn card(&self) -> &Card {
+        &self.card
     }
 
     pub fn set_front(&mut self, front: &str) {

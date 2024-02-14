@@ -4,6 +4,7 @@ pub mod errors;
 #[cfg(feature = "ssr")]
 pub mod fallback;
 pub mod garden;
+pub mod review;
 #[cfg(feature = "ssr")]
 pub mod state;
 pub mod ui;

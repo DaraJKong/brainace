@@ -1,12 +1,13 @@
 use leptos::{component, create_resource, create_server_action, view, IntoView, SignalGet};
 use leptos_meta::{provide_meta_context, Body, Html, Link, Stylesheet, Title};
-use leptos_router::{Route, Router, Routes, A};
+use leptos_router::{Outlet, Route, Router, Routes, A};
 
 use crate::{
     garden::{
         branch::{Branch, Branches, NoBranch},
         stem::{NoStem, Stem},
     },
+    review::Review,
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
 
@@ -51,27 +52,41 @@ pub fn App() -> impl IntoView {
         <Link rel="shortcut icon" type_="image/ico" href="/Brainace_Icon_Dark.ico"/>
         <Stylesheet id="leptos" href="/pkg/brainace_web.css"/>
         <Html lang="en" class="h-full"/>
-        <Body class="flex h-full flex-col bg-gray-870"/>
+        <Body class="h-full flex flex-col bg-gray-870"/>
         <Router>
-            <header class="h-24 px-8 py-4 border-b-2 border-gray-750">
-                <A href="/" class="float-left h-full focus:outline-none">
-                    <img src="/Brainace_Banner_Dark.svg" class="h-full outline-none"/>
-                </A>
-                <div class="flex float-right h-full items-center space-x-4">
-                    <LoginSection user=user logout=logout/>
-                </div>
-            </header>
-            <main class="flex-1 flex-col container mx-auto py-8">
-                <Routes>
-                    <Route path="" view=Branches/>
+            <Routes>
+                <Route
+                    path="/"
+                    view=move || {
+                        view! {
+                            <header class="h-24 px-8 py-4 border-b-2 border-gray-750">
+                                <A href="/" class="float-left h-full focus:outline-none">
+                                    <img
+                                        src="/Brainace_Banner_Dark.svg"
+                                        class="h-full outline-none"
+                                    />
+                                </A>
+                                <div class="flex float-right h-full items-center space-x-4">
+                                    <LoginSection user=user logout=logout/>
+                                </div>
+                            </header>
+                            <main class="flex-1 flex-col container mx-auto py-8">
+                                <Outlet/>
+                            </main>
+                        }
+                    }
+                >
+
+                    <Route path="/" view=Branches/>
                     <Route path="/branch" view=NoBranch/>
                     <Route path="/branch/:id" view=Branch/>
                     <Route path="/stem" view=NoStem/>
                     <Route path="/stem/:id" view=Stem/>
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
-                </Routes>
-            </main>
+                </Route>
+                <Route path="/review" view=Review/>
+            </Routes>
         </Router>
     }
 }

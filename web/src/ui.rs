@@ -1,7 +1,7 @@
 use icondata::Icon;
 use leptos::{
     component,
-    ev::{MouseEvent, SubmitEvent},
+    ev::{self, MouseEvent, SubmitEvent},
     event_target,
     server_fn::{
         client::Client, codec::PostUrl, error::NoCustomError, request::ClientReq, ServerFn,
@@ -111,6 +111,23 @@ where
 }
 
 #[component]
+pub fn ActionBtn<'a, F>(msg: &'a str, on_click: F) -> impl IntoView
+where
+    F: FnMut(MouseEvent) + 'static,
+{
+    let msg = msg.to_string();
+
+    view! {
+        <button
+            on:click=on_click
+            class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+        >
+            {msg}
+        </button>
+    }
+}
+
+#[component]
 pub fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
     let href = href.to_string();
     let msg = msg.to_string();
@@ -204,7 +221,9 @@ pub fn FormSubmit<'a>(msg: &'a str) -> impl IntoView {
 #[component]
 pub fn ServerAction<I, O, 'a>(
     action: Action<I, Result<O, ServerFnError>>,
+    #[prop(optional)] on_click: Option<Box<dyn FnMut(MouseEvent)>>,
     msg: &'a str,
+    #[prop(optional)] children: Option<Children>,
 ) -> impl IntoView
 where
     I: Clone
@@ -220,12 +239,16 @@ where
 
     view! {
         <ActionForm action=action>
-            <button
-                type="submit"
-                class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
-            >
-                {msg}
-            </button>
+            {children.map(|children| children())}
+            {view! {
+                <button
+                    type="submit"
+                    class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+                >
+                    {&msg}
+                </button>
+            }
+                .optional_event(ev::click, on_click)}
         </ActionForm>
     }
 }
