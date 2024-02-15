@@ -1,7 +1,7 @@
 use crate::{
     error_template::ErrorTemplate,
     garden::leaf::{get_all_leaves, Leaf, ReviewLeaf},
-    ui::{ActionBtn, ServerAction},
+    ui::{ActionA, ActionBtn, ServerAction},
 };
 use brainace_core::Rating;
 use chrono::Utc;
@@ -93,24 +93,37 @@ pub fn Review() -> impl IntoView {
                 </header>
                 <main class="w-3/5 mx-auto flex-1 flex justify-center items-center">
                     {move || {
-                        leaf()
-                            .map(|leaves| match leaves {
-                                Err(e) => {
-                                    view! {
-                                        <pre class="text-white">
-                                            "Server Error: " {e.to_string()}
-                                        </pre>
+                        if i() >= length() {
+                            view! {
+                                <div class="space-y-4">
+                                    <h1 class="text-5xl text-primary-500">"Congratulations!"</h1>
+                                    <p class="text-xl text-white">
+                                        "All leaves have been reviewed."
+                                    </p>
+                                </div>
+                            }
+                                .into_view()
+                        } else {
+                            leaf()
+                                .map(|leaves| match leaves {
+                                    Err(e) => {
+                                        view! {
+                                            <pre class="text-white">
+                                                "Server Error: " {e.to_string()}
+                                            </pre>
+                                        }
+                                            .into_view()
                                     }
-                                        .into_view()
-                                }
-                                Ok(None) => {
-                                    view! {
-                                        <p class="text-2xl text-white">"No leaf was found."</p>
+                                    Ok(None) => {
+                                        view! {
+                                            <p class="text-2xl text-white">"No leaf was found."</p>
+                                        }
+                                            .into_view()
                                     }
-                                        .into_view()
-                                }
-                                Ok(Some(leaf)) => view! { <Leaf leaf revealed/> }.into_view(),
-                            })
+                                    Ok(Some(leaf)) => view! { <Leaf leaf revealed/> }.into_view(),
+                                })
+                                .unwrap_or_default()
+                        }
                     }}
 
                 </main>
@@ -120,7 +133,13 @@ pub fn Review() -> impl IntoView {
                 >
                     <div class="h-36 w-3/5 mx-auto flex items-center">
                         {move || {
-                            if revealed() {
+                            if i() >= length() {
+                                view! {
+                                    <div class="w-full flex justify-center">
+                                        <ActionA href="/" msg="HOME"/>
+                                    </div>
+                                }
+                            } else if revealed() {
                                 view! {
                                     <div class="w-full flex justify-center space-x-12">
                                         <ReviewBtn
