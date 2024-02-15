@@ -3,18 +3,54 @@ use crate::{
     garden::leaf::{get_all_leaves, Leaf, ReviewLeaf},
     ui::{ActionBtn, ServerAction},
 };
+use brainace_core::Rating;
 use chrono::Utc;
 use leptos::{
     component, create_resource, create_server_action, create_signal, view, ErrorBoundary, IntoView,
     SignalGet, SignalUpdate, Transition,
 };
+use web_sys::MouseEvent;
+
+#[component]
+pub fn ReviewBtn(id: u32, rating: Rating, on_click: Box<dyn FnMut(MouseEvent)>) -> impl IntoView {
+    let review_leaf = create_server_action::<ReviewLeaf>();
+
+    let rating_value = match rating {
+        Rating::Again => 1,
+        Rating::Hard => 2,
+        Rating::Good => 3,
+        Rating::Easy => 4,
+    };
+
+    let now = move || Utc::now().timestamp_millis();
+
+    let msg = match rating {
+        Rating::Again => "AGAIN",
+        Rating::Hard => "HARD",
+        Rating::Good => "GOOD",
+        Rating::Easy => "EASY",
+    };
+
+    let (color, hover_color) = match rating {
+        Rating::Again => ("bg-red-500", "hover:bg-red-400"),
+        Rating::Hard => ("bg-yellow-500", "hover:bg-yellow-400"),
+        Rating::Good => ("bg-blue-500", "hover:bg-blue-400"),
+        Rating::Easy => ("bg-green-500", "hover:bg-green-400"),
+    };
+
+    view! {
+        <ServerAction action=review_leaf msg on_click color hover_color>
+            <input type="hidden" name="id" value=id/>
+            <input type="hidden" name="rating" value=rating_value/>
+            <input type="hidden" name="now" value=now/>
+        </ServerAction>
+    }
+}
 
 #[component]
 pub fn Review() -> impl IntoView {
     let (revealed, set_revealed) = create_signal(false);
     let (i, set_i) = create_signal(0);
-
-    let review_leaf = create_server_action::<ReviewLeaf>();
 
     let leaves = create_resource(|| (), move |_| get_all_leaves());
 
@@ -31,7 +67,6 @@ pub fn Review() -> impl IntoView {
             .map(|leaves| leaves.map(|leaves| leaves.get(i()).cloned()))
     };
     let id = move || leaf().unwrap().unwrap().unwrap().id();
-    let now = move || Utc::now().timestamp_millis();
 
     let next = move |_| {
         set_revealed.update(|x| *x = false);
@@ -88,42 +123,26 @@ pub fn Review() -> impl IntoView {
                             if revealed() {
                                 view! {
                                     <div class="w-full flex justify-center space-x-12">
-                                        <ServerAction
-                                            action=review_leaf
-                                            msg="AGAIN"
+                                        <ReviewBtn
+                                            id=id()
+                                            rating=Rating::Again
                                             on_click=Box::new(next)
-                                        >
-                                            <input type="hidden" name="id" value=id/>
-                                            <input type="hidden" name="rating" value=1/>
-                                            <input type="hidden" name="now" value=now/>
-                                        </ServerAction>
-                                        <ServerAction
-                                            action=review_leaf
-                                            msg="HARD"
+                                        />
+                                        <ReviewBtn
+                                            id=id()
+                                            rating=Rating::Hard
                                             on_click=Box::new(next)
-                                        >
-                                            <input type="hidden" name="id" value=id/>
-                                            <input type="hidden" name="rating" value=2/>
-                                            <input type="hidden" name="now" value=now/>
-                                        </ServerAction>
-                                        <ServerAction
-                                            action=review_leaf
-                                            msg="GOOD"
+                                        />
+                                        <ReviewBtn
+                                            id=id()
+                                            rating=Rating::Good
                                             on_click=Box::new(next)
-                                        >
-                                            <input type="hidden" name="id" value=id/>
-                                            <input type="hidden" name="rating" value=3/>
-                                            <input type="hidden" name="now" value=now/>
-                                        </ServerAction>
-                                        <ServerAction
-                                            action=review_leaf
-                                            msg="EASY"
+                                        />
+                                        <ReviewBtn
+                                            id=id()
+                                            rating=Rating::Easy
                                             on_click=Box::new(next)
-                                        >
-                                            <input type="hidden" name="id" value=id/>
-                                            <input type="hidden" name="rating" value=4/>
-                                            <input type="hidden" name="now" value=now/>
-                                        </ServerAction>
+                                        />
                                     </div>
                                 }
                             } else {
