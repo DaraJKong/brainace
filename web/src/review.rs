@@ -50,7 +50,7 @@ pub fn Review() -> impl IntoView {
                         id="progress"
                         max=length
                         value=i
-                        class="w-full h-4 rounded-full bg-gray-750 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-violet-400 [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-violet-400 text-violet-400"
+                        class="w-full h-4 rounded-full bg-secondary-750 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary-400 [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-primary-400 text-primary-400"
                     ></progress>
                     <label for="progress" class="shrink-0 text-xl text-white">
                         {move || format!("{} / {}", i(), length())}
@@ -79,7 +79,10 @@ pub fn Review() -> impl IntoView {
                     }}
 
                 </main>
-                <footer class="border-t-2 border-gray-750" class=("bg-gray-750", revealed)>
+                <footer
+                    class="border-t-2 border-secondary-750"
+                    class=("bg-secondary-750", revealed)
+                >
                     <div class="h-36 w-3/5 mx-auto flex items-center">
                         {move || {
                             if revealed() {

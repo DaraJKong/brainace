@@ -200,9 +200,9 @@ pub fn Leaf(leaf: Leaf, revealed: ReadSignal<bool>) -> impl IntoView {
                 <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
             </div>
             <div class=("hidden", move || !revealed())>
-                <hr class="border-t-1 border-gray-750"/>
+                <hr class="border-t-1 border-secondary-750"/>
                 <div class="p-5">
-                    <p class="text-2xl text-center text-violet-500 hyphens-auto">{leaf.back()}</p>
+                    <p class="text-2xl text-center text-primary-500 hyphens-auto">{leaf.back()}</p>
                 </div>
             </div>
         </Card>
@@ -222,9 +222,9 @@ pub fn LeafOverview(
                 <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
             </div>
             <div class=("hidden", hidden)>
-                <hr class="border-t-1 border-gray-750"/>
+                <hr class="border-t-1 border-secondary-750"/>
                 <div class="p-5">
-                    <p class="text-2xl text-center text-violet-500 hyphens-auto">{leaf.back()}</p>
+                    <p class="text-2xl text-center text-primary-500 hyphens-auto">{leaf.back()}</p>
                 </div>
             </div>
             <Controls class="absolute -top-4 right-4">
@@ -253,7 +253,7 @@ pub fn PendingLeaf(input: Option<AddLeaf>) -> impl IntoView {
     view! {
         <Card class="mx-auto relative w-1/3">
             <div class="animate-pulse p-4">
-                <p class="text-2xl text-center text-gray-750">{text}</p>
+                <p class="text-2xl text-center text-secondary-750">{text}</p>
             </div>
         </Card>
     }

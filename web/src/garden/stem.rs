@@ -207,7 +207,7 @@ pub fn Stem() -> impl IntoView {
                             }
                             Ok(stem) => {
                                 view! {
-                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-violet-500">
+                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
                                         <p class="text-4xl font-bold text-white tracking-wide">
                                             {stem.name()}
                                         </p>
@@ -314,7 +314,7 @@ pub fn StemOverview(
     let id = stem.id();
 
     view! {
-        <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-violet-500 transition ease-out">
+        <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-primary-500 transition ease-out">
             <A href=format!("/stem/{}", id) class="block p-5">
                 <p class="text-2xl text-center text-white hyphens-auto">{stem.name()}</p>
             </A>
@@ -340,7 +340,7 @@ pub fn PendingStem(input: Option<AddStem>) -> impl IntoView {
     view! {
         <Card class="mx-auto relative w-1/3">
             <div class="animate-pulse p-4">
-                <p class="text-2xl text-center text-gray-750">{text}</p>
+                <p class="text-2xl text-center text-secondary-750">{text}</p>
             </div>
         </Card>
     }

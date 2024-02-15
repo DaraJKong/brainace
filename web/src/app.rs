@@ -52,14 +52,14 @@ pub fn App() -> impl IntoView {
         <Link rel="shortcut icon" type_="image/ico" href="/Brainace_Icon_Dark.ico"/>
         <Stylesheet id="leptos" href="/pkg/brainace_web.css"/>
         <Html lang="en" class="h-full"/>
-        <Body class="h-full flex flex-col bg-gray-870"/>
+        <Body class="h-full flex flex-col bg-secondary-870"/>
         <Router>
             <Routes>
                 <Route
                     path="/"
                     view=move || {
                         view! {
-                            <header class="h-24 px-8 py-4 border-b-2 border-gray-750">
+                            <header class="h-24 px-8 py-4 border-b-2 border-secondary-750">
                                 <A href="/" class="float-left h-full focus:outline-none">
                                     <img
                                         src="/Brainace_Banner_Dark.svg"

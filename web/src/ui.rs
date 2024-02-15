@@ -15,7 +15,7 @@ use web_sys::Element;
 
 #[component]
 pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) -> impl IntoView {
-    let classes = "rounded-xl bg-gray-870 border border-gray-750 shadow-lg";
+    let classes = "rounded-xl bg-secondary-870 border border-secondary-750 shadow-lg";
     let class = class.map_or(format!("{}", classes), |str| format!("{} {}", str, classes));
 
     view! { <div class=class>{children()}</div> }
@@ -57,7 +57,7 @@ pub fn Modal<'a, F: Fn(MouseEvent) + 'static>(
 
 #[component]
 pub fn Controls<'a>(#[prop(optional)] class: Option<&'a str>, children: Children) -> impl IntoView {
-    let classes = "flex rounded-xl bg-violet-600 overflow-hidden";
+    let classes = "flex rounded-xl bg-primary-600 overflow-hidden";
     let class = class.map_or(format!("{}", classes), |str| format!("{} {}", str, classes));
 
     view! { <div class=class>{children()}</div> }
@@ -69,7 +69,7 @@ where
     F: FnMut(MouseEvent) + 'static,
 {
     view! {
-        <button on:click=on_click class="group size-8 p-1.5 text-white hover:bg-violet-500">
+        <button on:click=on_click class="group size-8 p-1.5 text-white hover:bg-primary-500">
             <Icon icon=icon class=format!("size-{} group-hover:scale-105", size)/>
         </button>
     }
@@ -100,7 +100,7 @@ where
         <ActionForm
             action=action
             on:submit=on_submit
-            class="group size-8 p-1.5 hover:bg-violet-500"
+            class="group size-8 p-1.5 hover:bg-primary-500"
         >
             {children.map(|children| children())}
             <button type="submit" class="text-white">
@@ -120,7 +120,7 @@ where
     view! {
         <button
             on:click=on_click
-            class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+            class="px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
         >
             {msg}
         </button>
@@ -135,7 +135,7 @@ pub fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
     view! {
         <A
             href=href
-            class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+            class="px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
         >
             {msg}
         </A>
@@ -175,7 +175,7 @@ pub fn FormInput<'a>(
                 placeholder=placeholder
                 name=name
                 maxlength=maxlength
-                class="w-full p-2 rounded-md bg-transparent text-white outline outline-2 outline-violet-500 caret-violet-400 selection:bg-violet-400 focus:outline-offset-2 focus:outline-violet-300 transition-all ease-out"
+                class="w-full p-2 rounded-md bg-transparent text-white outline outline-2 outline-primary-500 caret-primary-400 selection:bg-primary-400 focus:outline-offset-2 focus:outline-primary-300 transition-all ease-out"
             />
         </div>
     }
@@ -192,7 +192,7 @@ pub fn FormCheckbox<'a>(label: &'a str, name: &'a str) -> impl IntoView {
                 <input
                     type="checkbox"
                     name=name
-                    class="appearance-none relative peer size-5 shrink-0 rounded border-2 border-gray-630 checked:bg-violet-400 checked:border-0 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+                    class="appearance-none relative peer size-5 shrink-0 rounded border-2 border-secondary-630 checked:bg-primary-400 checked:border-0 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
                 />
                 <Icon
                     icon=icondata::FaCheckSolid
@@ -211,7 +211,7 @@ pub fn FormSubmit<'a>(msg: &'a str) -> impl IntoView {
     view! {
         <button
             type="submit"
-            class="w-full py-2 rounded-md bg-violet-500 text-white hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+            class="w-full py-2 rounded-md bg-primary-500 text-white hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
         >
             {msg}
         </button>
@@ -243,7 +243,7 @@ where
             {view! {
                 <button
                     type="submit"
-                    class="px-6 py-2 rounded-md bg-violet-500 text-white hover:scale-105 hover:bg-violet-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-violet-300 focus:ring-offset-gray-870 transition ease-out"
+                    class="px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
                 >
                     {&msg}
                 </button>

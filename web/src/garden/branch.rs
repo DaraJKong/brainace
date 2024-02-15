@@ -179,7 +179,7 @@ pub fn Branches() -> impl IntoView {
                             {existing_branches} {pending_branches} <li>
                                 <button
                                     on:click=move |_| set_show_modal.update(|x| *x = true)
-                                    class="block p-3 text-2xl text-white rounded-full bg-violet-600 hover:bg-violet-500 transition ease-out"
+                                    class="block p-3 text-2xl text-white rounded-full bg-primary-600 hover:bg-primary-500 transition ease-out"
                                 >
                                     <Icon icon=i::FaPlusSolid/>
                                 </button>
@@ -249,7 +249,7 @@ pub fn Branch() -> impl IntoView {
                             }
                             Ok(branch) => {
                                 view! {
-                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-violet-500">
+                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
                                         <p class="text-4xl font-bold text-white tracking-wide">
                                             {branch.name()}
                                         </p>
@@ -342,7 +342,7 @@ pub fn BranchOverview(branch: Branch) -> impl IntoView {
     view! {
         <A
             href=format!("/branch/{}", branch.id())
-            class="block py-6 px-9 text-2xl text-white rounded-xl outline outline-2 outline-gray-750 hover:outline-violet-500 hover:scale-105 transition ease-out"
+            class="block py-6 px-9 text-2xl text-white rounded-xl outline outline-2 outline-secondary-750 hover:outline-primary-500 hover:scale-105 transition ease-out"
         >
             {branch.name()}
         </A>
@@ -354,8 +354,8 @@ pub fn PendingBranch(input: Option<AddBranch>) -> impl IntoView {
     let text = input.map_or("LOADING".to_string(), |input| input.name);
 
     view! {
-        <div class="block py-6 px-9 rounded-xl border-2 border-gray-750">
-            <p class="text-2xl text-gray-750 animate-pulse">{text}</p>
+        <div class="block py-6 px-9 rounded-xl border-2 border-secondary-750">
+            <p class="text-2xl text-secondary-750 animate-pulse">{text}</p>
         </div>
     }
 }
