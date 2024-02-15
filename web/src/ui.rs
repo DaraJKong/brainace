@@ -223,6 +223,8 @@ pub fn ServerAction<I, O, 'a>(
     action: Action<I, Result<O, ServerFnError>>,
     #[prop(optional)] on_click: Option<Box<dyn FnMut(MouseEvent)>>,
     msg: &'a str,
+    #[prop(optional)] color: Option<&'a str>,
+    #[prop(optional)] hover_color: Option<&'a str>,
     #[prop(optional)] children: Option<Children>,
 ) -> impl IntoView
 where
@@ -236,6 +238,8 @@ where
     >>::FormData: From<web_sys::FormData>,
 {
     let msg = msg.to_string();
+    let color = color.unwrap_or("bg-primary-500").to_string();
+    let hover_color = hover_color.unwrap_or("hover:bg-primary-400").to_string();
 
     view! {
         <ActionForm action=action>
@@ -243,8 +247,11 @@ where
             {view! {
                 <button
                     type="submit"
-                    class="px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
+                    class=format!(
+                        "px-6 py-2 rounded-md {color} text-white hover:scale-105 {hover_color} focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out",
+                    )
                 >
+
                     {&msg}
                 </button>
             }
