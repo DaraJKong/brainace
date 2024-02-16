@@ -1,7 +1,7 @@
 use icondata::Icon;
 use leptos::{
     component,
-    ev::{self, MouseEvent, SubmitEvent},
+    ev::{MouseEvent, SubmitEvent},
     event_target,
     server_fn::{
         client::Client, codec::PostUrl, error::NoCustomError, request::ClientReq, ServerFn,
@@ -221,7 +221,6 @@ pub fn FormSubmit<'a>(msg: &'a str) -> impl IntoView {
 #[component]
 pub fn ServerAction<I, O, 'a>(
     action: Action<I, Result<O, ServerFnError>>,
-    #[prop(optional)] on_click: Option<Box<dyn FnMut(MouseEvent)>>,
     msg: &'a str,
     #[prop(optional)] color: Option<&'a str>,
     #[prop(optional)] hover_color: Option<&'a str>,
@@ -244,18 +243,15 @@ where
     view! {
         <ActionForm action=action>
             {children.map(|children| children())}
-            {view! {
-                <button
-                    type="submit"
-                    class=format!(
-                        "px-6 py-2 rounded-md {color} text-white hover:scale-105 {hover_color} focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out",
-                    )
-                >
+            <button
+                type="submit"
+                class=format!(
+                    "px-6 py-2 rounded-md {color} text-white hover:scale-105 {hover_color} focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out",
+                )
+            >
 
-                    {&msg}
-                </button>
-            }
-                .optional_event(ev::click, on_click)}
+                {&msg}
+            </button>
         </ActionForm>
     }
 }
