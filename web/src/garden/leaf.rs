@@ -26,7 +26,7 @@ pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
     };
 
     Ok(sqlx::query_as::<_, SqlLeaf>(
-        "SELECT * FROM leaves l
+        "SELECT l.* FROM leaves l
             INNER JOIN stems s
                 ON s.id = l.stem_id
             INNER JOIN branches b
