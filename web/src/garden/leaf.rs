@@ -5,11 +5,11 @@ use crate::{
     users::get_user,
 };
 use brainace_core::{Config, Leaf, Rating};
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 use leptos::{
-    component, create_signal, leptos_server::Submission, server, view, Action, CollectView,
-    ErrorBoundary, IntoView, ReadSignal, Resource, ServerFnError, SignalGet, SignalUpdate,
-    Transition,
+    component, create_resource, create_signal, leptos_server::Submission, server, view, Action,
+    CollectView, ErrorBoundary, IntoView, Params, ReadSignal, Resource, ServerFnError, SignalGet,
+    SignalUpdate, SignalWith, Transition,
 };
 use leptos_router::{use_params, Params, A};
 
@@ -99,21 +99,18 @@ pub async fn add_leaf(stem_id: u32, front: String, back: String) -> Result<(), S
 }
 
 #[server(ReviewLeaf, "/api")]
-pub async fn review_leaf(id: u32, rating: Rating, now: i64) -> Result<(), ServerFnError> {
+pub async fn review_leaf(
+    leaf: Leaf,
+    rating: Rating,
+    now: DateTime<Utc>,
+) -> Result<(), ServerFnError> {
     use crate::app::ssr::pool;
-    use brainace_core::SqlLeaf;
 
     let pool = pool()?;
 
-    let mut leaf = sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE id = ?")
-        .bind(id)
-        .fetch_one(&pool)
-        .await?
-        .into_leaf();
+    let mut leaf = leaf;
 
     let config = Config::default();
-    let now = DateTime::from_timestamp_millis(now).unwrap();
-
     leaf.review(&config, rating, now);
 
     let card_json: sqlx::types::Json<brainace_core::Card> =

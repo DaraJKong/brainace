@@ -56,7 +56,7 @@ impl Stem {
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Leaf {
     id: u32,
     stem_id: u32,

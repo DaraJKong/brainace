@@ -1,29 +1,22 @@
 use crate::{
     error_template::ErrorTemplate,
-    garden::leaf::{get_all_leaves, Leaf, ReviewLeaf},
-    ui::{ActionA, ActionBtn, ServerAction},
+    garden::leaf::{get_all_leaves, review_leaf, Leaf},
+    ui::{ActionA, ActionBtn},
 };
-use brainace_core::Rating;
+use brainace_core::{Leaf, Rating};
 use chrono::Utc;
 use leptos::{
-    component, create_resource, create_server_action, create_signal, view, ErrorBoundary, IntoView,
-    SignalGet, SignalUpdate, Transition,
+    component, create_resource, create_signal, spawn_local, view, ErrorBoundary, IntoView,
+    SignalGet, SignalUpdate, Transition, WriteSignal,
 };
-use web_sys::MouseEvent;
 
 #[component]
-pub fn ReviewBtn(id: u32, rating: Rating, on_click: Box<dyn FnMut(MouseEvent)>) -> impl IntoView {
-    let review_leaf = create_server_action::<ReviewLeaf>();
-
-    let rating_value = match rating {
-        Rating::Again => 1,
-        Rating::Hard => 2,
-        Rating::Good => 3,
-        Rating::Easy => 4,
-    };
-
-    let now = move || Utc::now().timestamp_millis();
-
+pub fn ReviewBtn(
+    leaf: Leaf,
+    rating: Rating,
+    set_i: WriteSignal<usize>,
+    set_revealed: WriteSignal<bool>,
+) -> impl IntoView {
     let msg = match rating {
         Rating::Again => "AGAIN",
         Rating::Hard => "HARD",
@@ -39,11 +32,20 @@ pub fn ReviewBtn(id: u32, rating: Rating, on_click: Box<dyn FnMut(MouseEvent)>) 
     };
 
     view! {
-        <ServerAction action=review_leaf msg on_click color hover_color>
-            <input type="hidden" name="id" value=id/>
-            <input type="hidden" name="rating" value=rating_value/>
-            <input type="hidden" name="now" value=now/>
-        </ServerAction>
+        <ActionBtn
+            msg
+            on_click=move |_| {
+                let leaf = leaf.clone();
+                spawn_local(async move {
+                    let _ = review_leaf(leaf, rating, Utc::now()).await;
+                });
+                set_revealed.update(|x| *x = false);
+                set_i.update(|i| *i += 1);
+            }
+
+            color
+            hover_color
+        />
     }
 }
 
@@ -66,12 +68,7 @@ pub fn Review() -> impl IntoView {
             .get()
             .map(|leaves| leaves.map(|leaves| leaves.get(i()).cloned()))
     };
-    let id = move || leaf().unwrap().unwrap().unwrap().id();
-
-    let next = move |_| {
-        set_revealed.update(|x| *x = false);
-        set_i.update(|i| *i += 1);
-    };
+    let leaf_unwrap = move || leaf().unwrap().unwrap().unwrap();
 
     // TODO: filter leaves by due date
 
@@ -143,24 +140,28 @@ pub fn Review() -> impl IntoView {
                                 view! {
                                     <div class="w-full flex justify-center space-x-12">
                                         <ReviewBtn
-                                            id=id()
+                                            leaf=leaf_unwrap()
                                             rating=Rating::Again
-                                            on_click=Box::new(next)
+                                            set_i
+                                            set_revealed
                                         />
                                         <ReviewBtn
-                                            id=id()
+                                            leaf=leaf_unwrap()
                                             rating=Rating::Hard
-                                            on_click=Box::new(next)
+                                            set_i
+                                            set_revealed
                                         />
                                         <ReviewBtn
-                                            id=id()
+                                            leaf=leaf_unwrap()
                                             rating=Rating::Good
-                                            on_click=Box::new(next)
+                                            set_i
+                                            set_revealed
                                         />
                                         <ReviewBtn
-                                            id=id()
+                                            leaf=leaf_unwrap()
                                             rating=Rating::Easy
-                                            on_click=Box::new(next)
+                                            set_i
+                                            set_revealed
                                         />
                                     </div>
                                 }
