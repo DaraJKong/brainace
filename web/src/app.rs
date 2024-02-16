@@ -5,6 +5,7 @@ use leptos_router::{Outlet, Route, Router, Routes, A};
 use crate::{
     garden::{
         branch::{Branch, Branches, NoBranch},
+        leaf::{LeafDetails, NoLeaf},
         stem::{NoStem, Stem},
     },
     review::Review,
@@ -82,6 +83,8 @@ pub fn App() -> impl IntoView {
                     <Route path="/branch/:id" view=Branch/>
                     <Route path="/stem" view=NoStem/>
                     <Route path="/stem/:id" view=Stem/>
+                    <Route path="/leaf" view=NoLeaf/>
+                    <Route path="/leaf/:id" view=LeafDetails/>
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                 </Route>

@@ -11,6 +11,41 @@ use leptos::{
     ErrorBoundary, IntoView, ReadSignal, Resource, ServerFnError, SignalGet, SignalUpdate,
     Transition,
 };
+use leptos_router::{use_params, Params, A};
+
+#[server(GetLeaf, "/api")]
+pub async fn get_leaf(id: u32) -> Result<Leaf, ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlLeaf;
+
+    let pool = pool()?;
+
+    Ok(
+        sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE id = ?")
+            .bind(id)
+            .fetch_one(&pool)
+            .await?
+            .into_leaf(),
+    )
+}
+
+#[server(GetLeaves, "/api")]
+pub async fn get_leaves(stem_id: u32) -> Result<Vec<Leaf>, ServerFnError> {
+    use crate::app::ssr::pool;
+    use brainace_core::SqlLeaf;
+
+    let pool = pool()?;
+
+    Ok(
+        sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE stem_id = ?")
+            .bind(stem_id)
+            .fetch_all(&pool)
+            .await?
+            .iter()
+            .map(|leaf| leaf.into_leaf())
+            .collect(),
+    )
+}
 
 #[server(GetAllLeaves, "/api")]
 pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
@@ -39,24 +74,6 @@ pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
     .iter()
     .map(|leaf| leaf.into_leaf())
     .collect())
-}
-
-#[server(GetLeaves, "/api")]
-pub async fn get_leaves(stem_id: u32) -> Result<Vec<Leaf>, ServerFnError> {
-    use crate::app::ssr::pool;
-    use brainace_core::SqlLeaf;
-
-    let pool = pool()?;
-
-    Ok(
-        sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE stem_id = ?")
-            .bind(stem_id)
-            .fetch_all(&pool)
-            .await?
-            .iter()
-            .map(|leaf| leaf.into_leaf())
-            .collect(),
-    )
 }
 
 #[server(AddLeaf, "/api")]
@@ -192,6 +209,66 @@ pub fn Leaves(
     }
 }
 
+#[derive(Params, PartialEq)]
+struct LeafParams {
+    id: u32,
+}
+
+#[component]
+pub fn LeafDetails() -> impl IntoView {
+    let params = use_params::<LeafParams>();
+    let id =
+        move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
+
+    let leaf = create_resource(id, move |_| get_leaf(id()));
+
+    view! {
+        <Transition fallback=move || {
+            view! { <p>"Loading..."</p> }
+        }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    leaf.get()
+                        .map(move |leaf| match leaf {
+                            Err(e) => {
+                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
+                            }
+                            Ok(leaf) => {
+                                let card = leaf.card();
+                                let state = serde_json::to_string(&card.state);
+                                let previous_state = serde_json::to_string(&card.previous_state);
+                                let log = serde_json::to_string(&card.log);
+                                view! {
+                                    <div class="text-white">
+                                        <p>{leaf.front()}</p>
+                                        <p>{leaf.back()}</p>
+                                        <p>{leaf.created_at().to_string()}</p>
+                                        <p>{card.due.to_string()}</p>
+                                        <p>{card.stability}</p>
+                                        <p>{card.difficulty}</p>
+                                        <p>{card.elapsed_days}</p>
+                                        <p>{card.scheduled_days}</p>
+                                        <p>{card.reps}</p>
+                                        <p>{card.lapses}</p>
+                                        <p>{state}</p>
+                                        <p>{card.last_review.to_string()}</p>
+                                        <p>{previous_state}</p>
+                                        <p>{log}</p>
+                                    </div>
+                                }
+                                    .into_view()
+                            }
+                        })
+                        .unwrap_or_default()
+                }}
+
+            </ErrorBoundary>
+        </Transition>
+    }
+}
+
 #[component]
 pub fn Leaf(leaf: Leaf, revealed: ReadSignal<bool>) -> impl IntoView {
     view! {
@@ -216,17 +293,23 @@ pub fn LeafOverview(
 ) -> impl IntoView {
     let (hidden, set_hidden) = create_signal(true);
 
+    let id = leaf.id();
+
     view! {
-        <Card class="mx-auto relative w-1/3">
-            <div class="p-5">
-                <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
-            </div>
-            <div class=("hidden", hidden)>
-                <hr class="border-t-1 border-secondary-750"/>
+        <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-primary-500 transition ease-out">
+            <A href=format!("/leaf/{}", id)>
                 <div class="p-5">
-                    <p class="text-2xl text-center text-primary-500 hyphens-auto">{leaf.back()}</p>
+                    <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
                 </div>
-            </div>
+                <div class=("hidden", hidden)>
+                    <hr class="border-t-1 border-secondary-750"/>
+                    <div class="p-5">
+                        <p class="text-2xl text-center text-primary-500 hyphens-auto">
+                            {leaf.back()}
+                        </p>
+                    </div>
+                </div>
+            </A>
             <Controls class="absolute -top-4 right-4">
                 <ControlBtn
                     on_click=move |_| { set_hidden.update(|x| *x = !*x) }
@@ -239,7 +322,7 @@ pub fn LeafOverview(
                     size="5"
                     icon=i::FaTrashCanRegular
                 >
-                    <input type="hidden" name="id" value=leaf.id()/>
+                    <input type="hidden" name="id" value=id/>
                 </ControlAction>
             </Controls>
         </Card>
@@ -256,5 +339,14 @@ pub fn PendingLeaf(input: Option<AddLeaf>) -> impl IntoView {
                 <p class="text-2xl text-center text-secondary-750">{text}</p>
             </div>
         </Card>
+    }
+}
+
+#[component]
+pub fn NoLeaf() -> impl IntoView {
+    view! {
+        <p class="text-xl text-white">
+            "No leaf selected. You need to log in and navigate to one of your leaves."
+        </p>
     }
 }
