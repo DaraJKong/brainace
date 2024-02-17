@@ -1,16 +1,15 @@
 # Get started with a build env with Rust nightly
-FROM docker.io/rustlang/rust:nightly-bullseye as builder
+FROM docker.io/rustlang/rust:nightly-alpine as builder
 
-# Install cargo-binstall, which makes it easier to install other
-# cargo extensions like cargo-leptos
-RUN wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
-RUN tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
-RUN cp cargo-binstall /usr/local/cargo/bin
+RUN apk upgrade --no-cache
+RUN apk add --no-cache curl npm libc-dev libressl-dev
+
+RUN npm install -g sass
 
 # Install cargo-leptos
-RUN cargo binstall cargo-leptos -y
+RUN curl --proto '=https' --tlsv1.2 -LsSf https://github.com/leptos-rs/cargo-leptos/releases/latest/download/cargo-leptos-installer.sh | sh
 # Install sqlx-cli
-RUN cargo binstall sqlx-cli -y
+RUN cargo install sqlx-cli
 
 # Add the WASM target
 RUN rustup target add wasm32-unknown-unknown
@@ -28,7 +27,7 @@ WORKDIR /app/web
 RUN cargo leptos build --release -vv
 WORKDIR /app
 
-FROM docker.io/rustlang/rust:nightly-bullseye as runner
+FROM docker.io/rustlang/rust:nightly-alpine as runner
 
 # Copy the server binary to the /app directory
 COPY --from=builder /app/target/release/brainace_web /app/
