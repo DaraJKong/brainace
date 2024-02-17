@@ -11,7 +11,103 @@ use leptos::{
 use leptos_icons::*;
 use leptos_router::{ActionForm, A};
 use serde::de::DeserializeOwned;
-use web_sys::Element;
+use web_sys::{Element, FormData};
+
+#[component]
+pub fn SideBar(children: Children) -> impl IntoView {
+    view! {
+        <aside class="fixed top-0 left-0 z-40 w-64 h-screen border-r-2 border-secondary-750">
+            <div class="h-full px-4 overflow-y-auto">{children()}</div>
+        </aside>
+    }
+}
+
+#[component]
+pub fn SideBarItems(children: Children) -> impl IntoView {
+    view! { <ul class="space-y-2">{children()}</ul> }
+}
+
+#[component]
+pub fn SideBarItem<'a>(href: &'a str, icon: Icon, text: &'a str) -> impl IntoView {
+    let href = href.to_string();
+    let text = text.to_string();
+
+    view! {
+        <li>
+            <A
+                href
+                class="group flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
+            >
+                <Icon icon class="size-6 text-primary-500 group-focus:text-white"/>
+                <span class="text-lg text-white font-medium">{text}</span>
+            </A>
+        </li>
+    }
+}
+
+#[component]
+pub fn SideBarItemCircle<'a>(href: &'a str, icon: Icon, text: &'a str) -> impl IntoView {
+    let href = href.to_string();
+    let text = text.to_string();
+
+    view! {
+        <li>
+            <A
+                href
+                class="group flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
+            >
+                <div class="relative size-6">
+                    <div class="absolute -top-2 -left-2 size-10 rounded-full bg-primary-500 group-focus:bg-white"></div>
+                    <Icon
+                        icon
+                        class="absolute top-0 left-0 z-10 size-6 text-white group-focus:text-primary-500"
+                    />
+                </div>
+                <span class="text-lg text-white font-medium">{text}</span>
+            </A>
+        </li>
+    }
+}
+
+#[component]
+pub fn SideBarAction<'a, ServFn>(
+    action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+    icon: Icon,
+    text: &'a str,
+    #[prop(optional)] children: Option<Children>,
+) -> impl IntoView
+where
+    ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + 'static,
+    <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
+        From<FormData>,
+{
+    let text = text.to_string();
+
+    view! {
+        <li>
+            <ActionForm action>
+                {children.map(|children| children())}
+                <button
+                    type="submit"
+                    class="group w-full flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
+                >
+                    <Icon icon class="size-6 text-primary-500 group-focus:text-white"/>
+                    <span class="text-lg text-white font-medium">{text}</span>
+                </button>
+            </ActionForm>
+        </li>
+    }
+}
+
+#[component]
+pub fn SideBarSeparator() -> impl IntoView {
+    view! { <hr class="my-6 border-secondary-750"/> }
+}
+
+#[component]
+pub fn SideContent(children: Children) -> impl IntoView {
+    view! { <div class="ml-64">{children()}</div> }
+}
 
 #[component]
 pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) -> impl IntoView {

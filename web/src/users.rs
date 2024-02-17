@@ -1,4 +1,7 @@
-use crate::ui::{ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, ServerAction};
+use crate::ui::{
+    Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
+    SideBarItemCircle, SideBarItems,
+};
 use brainace_core::auth::User;
 use leptos::{
     component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Suspense,
@@ -168,8 +171,9 @@ pub fn LoginSection(
 ) -> impl IntoView {
     let login_signup_buttons = move || {
         view! {
-            <ActionA href="/signup" msg="SIGN UP"/>
-            <ActionA href="/login" msg="LOG IN"/>
+            <SideBarItems>
+                <SideBarItem href="/login" icon=icondata::FiLogIn text="LOG IN"/>
+            </SideBarItems>
         }
     };
 
@@ -180,11 +184,20 @@ pub fn LoginSection(
                     .map(|user| match user {
                         Err(_) => login_signup_buttons.into_view(),
                         Ok(None) => login_signup_buttons.into_view(),
-                        Ok(Some(user)) => {
+                        Ok(Some(_)) => {
                             view! {
-                                <p class="text-2xl text-white">{user.username}</p>
-                                <ActionA href="/review" msg="REVIEW ALL"/>
-                                <ServerAction action=logout msg="LOG OUT"/>
+                                <SideBarItems>
+                                    <SideBarItemCircle
+                                        href="/profile"
+                                        icon=icondata::FaUserSolid
+                                        text="PROFILE"
+                                    />
+                                    <SideBarAction
+                                        action=logout
+                                        icon=icondata::FiLogOut
+                                        text="LOG OUT"
+                                    />
+                                </SideBarItems>
                             }
                                 .into_view()
                         }

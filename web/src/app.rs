@@ -9,6 +9,7 @@ use crate::{
         stem::{NoStem, Stem},
     },
     review::Review,
+    ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
 
@@ -60,20 +61,30 @@ pub fn App() -> impl IntoView {
                     path="/"
                     view=move || {
                         view! {
-                            <header class="h-24 px-8 py-4 border-b-2 border-secondary-750">
-                                <A href="/" class="float-left h-full focus:outline-none">
-                                    <img
-                                        src="/Brainace_Banner_Dark.svg"
-                                        class="h-full outline-none"
-                                    />
+                            <SideBar>
+                                <A href="/" class="block px-4 py-8 focus:outline-none">
+                                    <img src="/Brainace_Banner_Dark.svg" class="outline-none"/>
                                 </A>
-                                <div class="flex float-right h-full items-center space-x-4">
-                                    <LoginSection user=user logout=logout/>
-                                </div>
-                            </header>
-                            <main class="flex-1 flex-col container mx-auto py-8">
-                                <Outlet/>
-                            </main>
+                                <SideBarItems>
+                                    <SideBarItem
+                                        href="/"
+                                        icon=icondata::FaHouseSolid
+                                        text="DASHBOARD"
+                                    />
+                                    <SideBarItem
+                                        href="/review"
+                                        icon=icondata::FaBrainSolid
+                                        text="REVIEW ALL"
+                                    />
+                                </SideBarItems>
+                                <SideBarSeparator/>
+                                <LoginSection user logout/>
+                            </SideBar>
+                            <SideContent>
+                                <main class="flex-1 flex-col container mx-auto py-8">
+                                    <Outlet/>
+                                </main>
+                            </SideContent>
                         }
                     }
                 >
