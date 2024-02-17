@@ -238,21 +238,21 @@ pub fn LeafDetails() -> impl IntoView {
                                 let previous_state = serde_json::to_string(&card.previous_state);
                                 let log = serde_json::to_string(&card.log);
                                 view! {
-                                    <div class="text-white">
-                                        <p>{leaf.front()}</p>
-                                        <p>{leaf.back()}</p>
-                                        <p>{leaf.created_at().to_string()}</p>
-                                        <p>{card.due.to_string()}</p>
-                                        <p>{card.stability}</p>
-                                        <p>{card.difficulty}</p>
-                                        <p>{card.elapsed_days}</p>
-                                        <p>{card.scheduled_days}</p>
-                                        <p>{card.reps}</p>
-                                        <p>{card.lapses}</p>
-                                        <p>{state}</p>
-                                        <p>{card.last_review.to_string()}</p>
-                                        <p>{previous_state}</p>
-                                        <p>{log}</p>
+                                    <div class="text-xl text-white">
+                                        <p>"Front: " {leaf.front()}</p>
+                                        <p>"Back: " {leaf.back()}</p>
+                                        <p>"Created at: " {leaf.created_at().to_string()}</p>
+                                        <p>"Due: " {card.due.to_string()}</p>
+                                        <p>"Stability: " {card.stability}</p>
+                                        <p>"Difficulty: " {card.difficulty}</p>
+                                        <p>"Elapsed days: " {card.elapsed_days}</p>
+                                        <p>"Scheduled days: " {card.scheduled_days}</p>
+                                        <p>"Reps: " {card.reps}</p>
+                                        <p>"Lapses: " {card.lapses}</p>
+                                        <p>"State: " {state}</p>
+                                        <p>"Last review: " {card.last_review.to_string()}</p>
+                                        <p>"Previous state: " {previous_state}</p>
+                                        <p>"Log: " {log}</p>
                                     </div>
                                 }
                                     .into_view()
