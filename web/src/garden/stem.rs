@@ -1,4 +1,3 @@
-use super::i;
 use crate::{
     error_template::ErrorTemplate,
     garden::leaf::{get_leaves, AddLeaf, DeleteLeaf, Leaves},
@@ -216,12 +215,12 @@ pub fn Stem() -> impl IntoView {
                                             <ControlBtn
                                                 on_click=move |_| set_editing.update(|x| *x = true)
                                                 size="5"
-                                                icon=i::FaPencilSolid
+                                                icon=icondata::FaPencilSolid
                                             />
                                             <ControlBtn
                                                 on_click=move |_| set_adding_leaf.update(|x| *x = true)
                                                 size="5"
-                                                icon=i::FaPlusSolid
+                                                icon=icondata::FaPlusSolid
                                             />
                                             <ControlAction
                                                 action=delete_stem
@@ -230,7 +229,7 @@ pub fn Stem() -> impl IntoView {
                                                 }
 
                                                 size="5"
-                                                icon=i::FaTrashCanRegular
+                                                icon=icondata::FaTrashCanRegular
                                             >
                                                 <input type="hidden" name="id" value=id/>
                                             </ControlAction>
@@ -319,12 +318,12 @@ pub fn StemOverview(
                 <p class="text-2xl text-center text-white hyphens-auto">{stem.name()}</p>
             </A>
             <Controls class="absolute -top-4 right-4">
-                <ControlBtn on_click=move |_| {} size="5" icon=i::FaPencilSolid/>
+                <ControlBtn on_click=move |_| {} size="5" icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_stem
                     on_submit=move |_| {}
                     size="5"
-                    icon=i::FaTrashCanRegular
+                    icon=icondata::FaTrashCanRegular
                 >
                     <input type="hidden" name="id" value=id/>
                 </ControlAction>

@@ -1,4 +1,3 @@
-use super::i;
 use crate::{
     error_template::ErrorTemplate,
     garden::stem::{AddStem, Stems},
@@ -181,7 +180,7 @@ pub fn Branches() -> impl IntoView {
                                     on:click=move |_| set_show_modal.update(|x| *x = true)
                                     class="block p-3 text-2xl text-white rounded-full bg-primary-600 hover:bg-primary-500 transition ease-out"
                                 >
-                                    <Icon icon=i::FaPlusSolid/>
+                                    <Icon icon=icondata::FaPlusSolid/>
                                 </button>
                             </li>
                         </ul>
@@ -258,12 +257,12 @@ pub fn Branch() -> impl IntoView {
                                             <ControlBtn
                                                 on_click=move |_| set_editing.update(|x| *x = true)
                                                 size="5"
-                                                icon=i::FaPencilSolid
+                                                icon=icondata::FaPencilSolid
                                             />
                                             <ControlBtn
                                                 on_click=move |_| set_adding_stem.update(|x| *x = true)
                                                 size="5"
-                                                icon=i::FaPlusSolid
+                                                icon=icondata::FaPlusSolid
                                             />
                                             <ControlAction
                                                 action=delete_branch
@@ -272,7 +271,7 @@ pub fn Branch() -> impl IntoView {
                                                 }
 
                                                 size="5"
-                                                icon=i::FaTrashCanRegular
+                                                icon=icondata::FaTrashCanRegular
                                             >
                                                 <input type="hidden" name="id" value=id/>
                                             </ControlAction>

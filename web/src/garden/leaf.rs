@@ -1,4 +1,3 @@
-use super::i;
 use crate::{
     error_template::ErrorTemplate,
     ui::{Card, ControlAction, ControlBtn, Controls},
@@ -311,13 +310,13 @@ pub fn LeafOverview(
                 <ControlBtn
                     on_click=move |_| { set_hidden.update(|x| *x = !*x) }
                     size="5"
-                    icon=i::FaEyeRegular
+                    icon=icondata::FaEyeRegular
                 />
                 <ControlAction
                     action=delete_leaf
                     on_submit=move |_| {}
                     size="5"
-                    icon=i::FaTrashCanRegular
+                    icon=icondata::FaTrashCanRegular
                 >
                     <input type="hidden" name="id" value=id/>
                 </ControlAction>
