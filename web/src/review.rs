@@ -4,7 +4,7 @@ use crate::{
     ui::{ActionA, ActionBtn},
 };
 use brainace_core::{Leaf, Rating};
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use leptos::{
     component, create_resource, create_signal, spawn_local, view, ErrorBoundary, IntoView,
     SignalGet, SignalUpdate, Transition, WriteSignal,
@@ -56,21 +56,27 @@ pub fn Review() -> impl IntoView {
 
     let leaves = create_resource(|| (), move |_| get_all_leaves());
 
+    let due_today_leaves = move || {
+        leaves.get().map(|leaves| {
+            leaves.map(|leaves| {
+                leaves
+                    .into_iter()
+                    .filter(|leaf| {
+                        leaf.card().due.num_days_from_ce() <= Utc::now().num_days_from_ce()
+                    })
+                    .collect()
+            })
+        })
+    };
     let length = move || {
-        leaves
-            .get()
+        due_today_leaves()
             .unwrap_or(Ok(Vec::new()))
             .unwrap_or_default()
             .len()
     };
-    let leaf = move || {
-        leaves
-            .get()
-            .map(|leaves| leaves.map(|leaves| leaves.get(i()).cloned()))
-    };
+    let leaf =
+        move || due_today_leaves().map(|leaves| leaves.map(|leaves| leaves.get(i()).cloned()));
     let leaf_unwrap = move || leaf().unwrap().unwrap().unwrap();
-
-    // TODO: filter leaves by due date
 
     view! {
         <Transition fallback=move || view! { <p class="text-white">"Loading..."</p> }>
