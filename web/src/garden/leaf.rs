@@ -65,7 +65,9 @@ pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
                 ON s.id = l.stem_id
             INNER JOIN branches b
                 ON b.id = s.branch_id
-                AND b.user_id = ?",
+            INNER JOIN trees t
+                ON t.id = b.tree_id
+                AND t.user_id = ?",
     )
     .bind(id)
     .fetch_all(&pool)
