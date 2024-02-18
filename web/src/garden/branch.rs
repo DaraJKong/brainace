@@ -2,7 +2,6 @@ use crate::{
     error_template::ErrorTemplate,
     garden::stem::{AddStem, Stems},
     ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
-    users::get_user,
 };
 use brainace_core::Branch;
 use leptos::{
@@ -48,20 +47,14 @@ pub async fn get_branches(tree_id: u32) -> Result<Vec<Branch>, ServerFnError> {
 }
 
 #[server(AddBranch, "/api")]
-pub async fn add_branch(name: String) -> Result<(), ServerFnError> {
+pub async fn add_branch(tree_id: u32, name: String) -> Result<(), ServerFnError> {
     use crate::app::ssr::pool;
 
-    let user = get_user().await?;
     let pool = pool()?;
 
-    let id = match user {
-        Some(user) => user.id,
-        None => -1,
-    };
-
     Ok(
-        sqlx::query("INSERT INTO branches (user_id, name) VALUES (?, ?)")
-            .bind(id)
+        sqlx::query("INSERT INTO branches (tree_id, name) VALUES (?, ?)")
+            .bind(tree_id)
             .bind(name)
             .execute(&pool)
             .await

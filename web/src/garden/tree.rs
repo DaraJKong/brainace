@@ -6,7 +6,7 @@ use crate::{
 use brainace_core::Tree;
 use leptos::{
     component, create_resource, create_server_multi_action, create_signal, server, view,
-    ErrorBoundary, IntoView, ServerFnError, SignalGet, SignalUpdate, Transition,
+    ErrorBoundary, IntoView, ServerFnError, SignalUpdate, Transition,
 };
 use leptos_router::MultiActionForm;
 
@@ -50,7 +50,7 @@ pub fn Tree() -> impl IntoView {
                 view! { <ErrorTemplate errors=errors/> }
             }>
                 {move || {
-                    tree.get()
+                    tree()
                         .map(move |tree| match tree {
                             Err(e) => {
                                 view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
@@ -76,6 +76,18 @@ pub fn Tree() -> impl IntoView {
                     on:submit=move |_| set_show_modal.update(|x| *x = false)
                 >
                     <FormH1 text="Create a new branch"/>
+                    {move || {
+                        tree.and_then(|tree| {
+                            view! {
+                                <input
+                                    type="hidden"
+                                    name="tree_id"
+                                    value=tree.as_ref().unwrap().id()
+                                />
+                            }
+                        })
+                    }}
+
                     <FormInput
                         input_type="text"
                         id="Name"
