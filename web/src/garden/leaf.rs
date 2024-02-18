@@ -41,7 +41,7 @@ pub async fn get_leaves(stem_id: u32) -> Result<Vec<Leaf>, ServerFnError> {
             .fetch_all(&pool)
             .await?
             .iter()
-            .map(|leaf| leaf.into_leaf())
+            .map(|sql_leaf| sql_leaf.into_leaf())
             .collect(),
     )
 }
@@ -71,7 +71,7 @@ pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
     .fetch_all(&pool)
     .await?
     .iter()
-    .map(|leaf| leaf.into_leaf())
+    .map(|sql_leaf| sql_leaf.into_leaf())
     .collect())
 }
 

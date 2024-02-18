@@ -42,7 +42,7 @@ pub async fn get_branches(tree_id: u32) -> Result<Vec<Branch>, ServerFnError> {
             .fetch_all(&pool)
             .await?
             .iter()
-            .map(|branch| branch.into_branch())
+            .map(|sql_branch| sql_branch.into_branch())
             .collect(),
     )
 }

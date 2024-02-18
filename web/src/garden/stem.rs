@@ -42,7 +42,7 @@ pub async fn get_stems(branch_id: u32) -> Result<Vec<Stem>, ServerFnError> {
             .fetch_all(&pool)
             .await?
             .iter()
-            .map(|branch| branch.into_stem())
+            .map(|sql_stem| sql_stem.into_stem())
             .collect(),
     )
 }
