@@ -2,7 +2,8 @@ use crate::{
     error_template::ErrorTemplate,
     garden::leaf::{get_leaves, AddLeaf, DeleteLeaf, Leaves},
     ui::{
-        Card, ControlA, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal,
+        Card, ControlA, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit,
+        Loading, Modal,
     },
 };
 use brainace_core::Stem;
@@ -105,7 +106,7 @@ pub fn Stems(
     );
 
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+        <Transition fallback=move || view! { <Loading/> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
             }>
@@ -195,7 +196,7 @@ pub fn Stem() -> impl IntoView {
 
     view! {
         <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
+            view! { <Loading/> }
         }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
