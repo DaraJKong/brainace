@@ -7,8 +7,8 @@ use crate::{
 use brainace_core::Branch;
 use leptos::{
     component, create_resource, create_server_action, create_server_multi_action, create_signal,
-    server, view, CollectView, ErrorBoundary, IntoView, Params, ServerFnError, SignalGet,
-    SignalUpdate, SignalWith, Transition,
+    server, view, CollectView, ErrorBoundary, IntoView, MultiAction, Params, ServerFnError,
+    SignalGet, SignalUpdate, SignalWith, Transition, WriteSignal,
 };
 use leptos_icons::Icon;
 use leptos_router::{use_navigate, use_params, MultiActionForm, Params, A};
@@ -25,34 +25,26 @@ pub async fn get_branch(id: u32) -> Result<Branch, ServerFnError> {
             .bind(id)
             .fetch_one(&pool)
             .await?
-            .into_branch(&pool)
-            .await,
+            .into_branch(),
     )
 }
 
 #[server(GetBranches, "/api")]
-pub async fn get_branches() -> Result<Vec<Branch>, ServerFnError> {
+pub async fn get_branches(tree_id: u32) -> Result<Vec<Branch>, ServerFnError> {
     use crate::app::ssr::pool;
     use brainace_core::SqlBranch;
-    use futures::future::join_all;
 
-    let user = get_user().await?;
     let pool = pool()?;
 
-    let id = match user {
-        Some(user) => user.id,
-        None => -1,
-    };
-
-    Ok(join_all(
-        sqlx::query_as::<_, SqlBranch>("SELECT * FROM branches WHERE user_id = ?")
-            .bind(id)
+    Ok(
+        sqlx::query_as::<_, SqlBranch>("SELECT * FROM branches WHERE tree_id = ?")
+            .bind(tree_id)
             .fetch_all(&pool)
             .await?
             .iter()
-            .map(|branch| branch.into_branch(&pool)),
+            .map(|branch| branch.into_branch())
+            .collect(),
     )
-    .await)
 }
 
 #[server(AddBranch, "/api")]
@@ -104,21 +96,17 @@ pub async fn delete_branch(id: u32) -> Result<(), ServerFnError> {
         .map(|_| ())?)
 }
 
-#[derive(Params, PartialEq)]
-struct BranchParams {
-    id: u32,
-}
-
 #[component]
-pub fn Branches() -> impl IntoView {
-    let (show_modal, set_show_modal) = create_signal(false);
-
-    let add_branch = create_server_multi_action::<AddBranch>();
+pub fn Branches(
+    tree_id: u32,
+    set_show_modal: WriteSignal<bool>,
+    add_branch: MultiAction<AddBranch, Result<(), ServerFnError>>,
+) -> impl IntoView {
     let submissions = add_branch.submissions();
 
     let branches = create_resource(
         move || (add_branch.version().get()),
-        move |_| get_branches(),
+        move |_| get_branches(tree_id),
     );
 
     view! {
@@ -189,29 +177,12 @@ pub fn Branches() -> impl IntoView {
 
             </ErrorBoundary>
         </Transition>
-        <Modal
-            id="add_branch_modal"
-            show=show_modal
-            on_blur=move |_| set_show_modal.update(|x| *x = false)
-        >
-            <Card class="w-1/3 p-6">
-                <MultiActionForm
-                    action=add_branch
-                    on:submit=move |_| set_show_modal.update(|x| *x = false)
-                >
-                    <FormH1 text="Create a new branch"/>
-                    <FormInput
-                        input_type="text"
-                        id="Name"
-                        label="Name"
-                        placeholder="Name"
-                        name="name"
-                    />
-                    <FormSubmit msg="ADD"/>
-                </MultiActionForm>
-            </Card>
-        </Modal>
     }
+}
+
+#[derive(Params, PartialEq)]
+struct BranchParams {
+    id: u32,
 }
 
 #[component]

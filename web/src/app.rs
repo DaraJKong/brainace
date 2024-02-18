@@ -4,9 +4,10 @@ use leptos_router::{Outlet, Route, Router, Routes, A};
 
 use crate::{
     garden::{
-        branch::{Branch, Branches, NoBranch},
+        branch::{Branch, NoBranch},
         leaf::{LeafDetails, NoLeaf},
         stem::{NoStem, Stem},
+        tree::Tree,
     },
     review::Review,
     ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
@@ -89,7 +90,7 @@ pub fn App() -> impl IntoView {
                     }
                 >
 
-                    <Route path="/" view=Branches/>
+                    <Route path="/" view=Tree/>
                     <Route path="/branch" view=NoBranch/>
                     <Route path="/branch/:id" view=Branch/>
                     <Route path="/stem" view=NoStem/>

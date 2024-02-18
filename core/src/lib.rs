@@ -14,9 +14,23 @@ pub struct Config {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Branch {
+pub struct Tree {
     id: u32,
     user: Option<User>,
+    name: String,
+    created_at: String,
+}
+
+impl Tree {
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Branch {
+    id: u32,
+    tree_id: u32,
     name: String,
     created_at: String,
 }
@@ -118,16 +132,30 @@ cfg_if::cfg_if! { if #[cfg(feature = "auth")] {
     use sqlx::{FromRow, SqlitePool};
 
     #[derive(FromRow)]
-    pub struct SqlBranch {
+    pub struct SqlTree {
         pub id: u32,
         pub user_id: i64,
         pub name: String,
         pub created_at: String,
     }
 
+    impl SqlTree {
+        pub async fn into_tree(self, pool: &SqlitePool) -> Tree {
+            Tree { id: self.id, user: User::get(self.user_id, pool).await, name: self.name.clone(), created_at: self.created_at.clone() }
+        }
+    }
+
+    #[derive(FromRow)]
+    pub struct SqlBranch {
+        pub id: u32,
+        pub tree_id: u32,
+        pub name: String,
+        pub created_at: String,
+    }
+
     impl SqlBranch {
-        pub async fn into_branch(&self, pool: &SqlitePool) -> Branch {
-            Branch { id: self.id, user: User::get(self.user_id, pool).await, name: self.name.clone(), created_at: self.created_at.clone() }
+        pub fn into_branch(&self) -> Branch {
+            Branch { id: self.id, tree_id: self.tree_id, name: self.name.clone(), created_at: self.created_at.clone() }
         }
     }
 

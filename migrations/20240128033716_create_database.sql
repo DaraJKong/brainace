@@ -10,13 +10,21 @@ CREATE TABLE IF NOT EXISTS user_permissions (
     token      TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS branches (
+CREATE TABLE IF NOT EXISTS trees (
     id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     user_id    INTEGER NOT NULL,
     name       TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CHECK(name <> ""),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS branches (
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    tree_id    INTEGER NOT NULL,
+    name       TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK (name <> ""),
+    FOREIGN KEY (tree_id) REFERENCES trees(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS stems (
@@ -24,6 +32,7 @@ CREATE TABLE IF NOT EXISTS stems (
     branch_id  INTEGER NOT NULL,
     name       TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK(name <> ""),
     FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
 );
 
