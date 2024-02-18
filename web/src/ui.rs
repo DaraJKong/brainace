@@ -21,7 +21,7 @@ pub fn Loading<'a>(#[prop(optional)] class: Option<&'a str>) -> impl IntoView {
     );
 
     view! {
-        <div class="size-full flex justify-center items-center">
+        <div class="size-full flex justify-center items-center animate-fadeIn">
             <Icon icon=icondata::CgSpinner class/>
         </div>
     }

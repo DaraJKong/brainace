@@ -25,6 +25,20 @@ module.exports = {
                     870: "#1f1c24",
                 },
             },
+            animation: {
+                fadeIn: "fadeIn 2s",
+                fadeOut: "fadeOut 2s",
+            },
+            keyframes: theme => ({
+                fadeIn: {
+                    "0%": { opacity: theme("opacity.0") },
+                    "100%": { opacity: theme("opacity.100") },
+                },
+                fadeOut: {
+                    "0%": { opacity: theme("opacity.100") },
+                    "100%": { opacity: theme("opacity.0") },
+                },
+            }),
         },
     },
     plugins: [],
