@@ -1,6 +1,6 @@
 use crate::{
     error_template::ErrorTemplate,
-    ui::{Card, ControlA, ControlAction, ControlBtn, Controls},
+    ui::{Card, ControlA, ControlAction, ControlBtn, Controls, Loading},
 };
 use brainace_core::{Leaf, Rating, State};
 use chrono::{DateTime, Utc};
@@ -145,7 +145,9 @@ pub fn Leaves(
     submissions: ReadSignal<Vec<Submission<AddLeaf, Result<(), ServerFnError>>>>,
 ) -> impl IntoView {
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+        <Transition fallback=move || {
+            view! { <Loading/> }
+        }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
             }>
@@ -221,7 +223,7 @@ pub fn LeafDetails() -> impl IntoView {
 
     view! {
         <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
+            view! { <Loading/> }
         }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }

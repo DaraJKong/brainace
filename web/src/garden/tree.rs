@@ -1,7 +1,7 @@
 use crate::{
     error_template::ErrorTemplate,
     garden::branch::{AddBranch, Branches},
-    ui::{Card, FormH1, FormInput, FormSubmit, Modal},
+    ui::{Card, FormH1, FormInput, FormSubmit, Loading, Modal},
 };
 use brainace_core::Tree;
 use leptos::{
@@ -43,7 +43,7 @@ pub fn Tree() -> impl IntoView {
     let tree = create_resource(|| (), move |_| get_tree());
 
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+        <Transition fallback=move || view! { <Loading/> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
             }>

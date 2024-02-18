@@ -1,7 +1,9 @@
 use crate::{
     error_template::ErrorTemplate,
     garden::stem::{AddStem, Stems},
-    ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
+    ui::{
+        Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Loading, Modal,
+    },
 };
 use brainace_core::Branch;
 use leptos::{
@@ -103,7 +105,7 @@ pub fn Branches(
     );
 
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
+        <Transition fallback=move || view! { <Loading/> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
             }>
@@ -198,7 +200,7 @@ pub fn Branch() -> impl IntoView {
 
     view! {
         <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
+            view! { <Loading/> }
         }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }

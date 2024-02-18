@@ -14,6 +14,20 @@ use serde::de::DeserializeOwned;
 use web_sys::{Element, FormData};
 
 #[component]
+pub fn Loading<'a>(#[prop(optional)] class: Option<&'a str>) -> impl IntoView {
+    let class = format!(
+        "animate-spin {}",
+        class.unwrap_or("size-10 text-primary-400")
+    );
+
+    view! {
+        <div class="size-full flex justify-center items-center">
+            <Icon icon=icondata::CgSpinner class/>
+        </div>
+    }
+}
+
+#[component]
 pub fn SideBar(children: Children) -> impl IntoView {
     view! {
         <aside class="fixed top-0 left-0 z-40 w-64 h-screen border-r-2 border-secondary-750">

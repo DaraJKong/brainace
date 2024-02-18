@@ -1,7 +1,7 @@
 use crate::{
     error_template::ErrorTemplate,
     garden::leaf::{get_all_leaves, review_leaf, Leaf},
-    ui::{ActionA, ActionBtn},
+    ui::{ActionA, ActionBtn, Loading},
 };
 use brainace_core::{Leaf, Rating};
 use chrono::{Datelike, Utc};
@@ -79,7 +79,7 @@ pub fn Review() -> impl IntoView {
     let leaf_unwrap = move || leaf().unwrap().unwrap().unwrap();
 
     view! {
-        <Transition fallback=move || view! { <p class="text-white">"Loading..."</p> }>
+        <Transition fallback=move || view! { <Loading/> }>
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors/> }
             }>
