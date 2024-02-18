@@ -106,7 +106,7 @@ pub fn SideBarSeparator() -> impl IntoView {
 
 #[component]
 pub fn SideContent(children: Children) -> impl IntoView {
-    view! { <div class="ml-64">{children()}</div> }
+    view! { <div class="h-full ml-64 flex flex-col">{children()}</div> }
 }
 
 #[component]

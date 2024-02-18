@@ -1,12 +1,12 @@
 use crate::ui::{
-    Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
+    ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
     SideBarItemCircle, SideBarItems,
 };
 use brainace_core::auth::User;
 use leptos::{
     component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Suspense,
 };
-use leptos_router::ActionForm;
+use leptos_router::{ActionForm, A};
 
 #[cfg(feature = "ssr")]
 mod ssr {
@@ -104,63 +104,79 @@ pub async fn logout() -> Result<(), ServerFnError> {
 #[component]
 pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <Card class="mx-auto w-1/3 p-6">
-            <ActionForm action=action>
-                <FormH1 text="Log in"/>
-                <FormInput
-                    input_type="text"
-                    id="username"
-                    label="Username"
-                    placeholder="Username"
-                    name="username"
-                    maxlength="32"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password"
-                    label="Password"
-                    placeholder="Password"
-                    name="password"
-                />
-                <FormCheckbox label="Remember me?" name="remember"/>
-                <FormSubmit msg="LOG IN"/>
-            </ActionForm>
-        </Card>
+        <div class="h-full flex flex-col justify-center items-center">
+            <Card class="w-1/3 p-6">
+                <ActionForm action=action>
+                    <FormH1 text="Log in"/>
+                    <FormInput
+                        input_type="text"
+                        id="username"
+                        label="Username"
+                        placeholder="Username"
+                        name="username"
+                        maxlength="32"
+                    />
+                    <FormInput
+                        input_type="password"
+                        id="password"
+                        label="Password"
+                        placeholder="Password"
+                        name="password"
+                    />
+                    <FormCheckbox label="Remember me?" name="remember"/>
+                    <FormSubmit msg="LOG IN"/>
+                </ActionForm>
+            </Card>
+            <div class="mt-8 flex items-center space-x-4">
+                <span class="text-lg text-secondary-630">"Don't have an account yet?"</span>
+                <A href="/signup" class="text-lg font-medium text-primary-500">
+                    "Sign Up"
+                </A>
+            </div>
+        </div>
     }
 }
 
 #[component]
 pub fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <Card class="mx-auto w-1/3 p-6">
-            <ActionForm action=action>
-                <FormH1 text="Create your account"/>
-                <FormInput
-                    input_type="text"
-                    id="username"
-                    label="Username"
-                    placeholder="Username"
-                    name="username"
-                    maxlength="32"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password"
-                    label="Password"
-                    placeholder="Password"
-                    name="password"
-                />
-                <FormInput
-                    input_type="password"
-                    id="password_confirmation"
-                    label="Confirm Password"
-                    placeholder="Password again"
-                    name="password_confirmation"
-                />
-                <FormCheckbox label="Remember me?" name="remember"/>
-                <FormSubmit msg="SIGN UP"/>
-            </ActionForm>
-        </Card>
+        <div class="h-full flex flex-col justify-center items-center">
+            <Card class="w-1/3 p-6">
+                <ActionForm action=action>
+                    <FormH1 text="Create your account"/>
+                    <FormInput
+                        input_type="text"
+                        id="username"
+                        label="Username"
+                        placeholder="Username"
+                        name="username"
+                        maxlength="32"
+                    />
+                    <FormInput
+                        input_type="password"
+                        id="password"
+                        label="Password"
+                        placeholder="Password"
+                        name="password"
+                    />
+                    <FormInput
+                        input_type="password"
+                        id="password_confirmation"
+                        label="Confirm Password"
+                        placeholder="Password again"
+                        name="password_confirmation"
+                    />
+                    <FormCheckbox label="Remember me?" name="remember"/>
+                    <FormSubmit msg="SIGN UP"/>
+                </ActionForm>
+            </Card>
+            <div class="mt-8 flex items-center space-x-4">
+                <span class="text-lg text-secondary-630">"Already have an account?"</span>
+                <A href="/login" class="text-lg font-medium text-primary-500">
+                    "Log In"
+                </A>
+            </div>
+        </div>
     }
 }
 
