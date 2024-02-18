@@ -36,7 +36,7 @@ pub fn SideBarItem<'a>(href: &'a str, icon: Icon, text: &'a str) -> impl IntoVie
         <li>
             <A
                 href
-                class="group flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
+                class="group block flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
             >
                 <Icon icon class="size-6 text-primary-500 group-focus:text-white"/>
                 <span class="text-lg text-white font-medium">{text}</span>
@@ -54,7 +54,7 @@ pub fn SideBarItemCircle<'a>(href: &'a str, icon: Icon, text: &'a str) -> impl I
         <li>
             <A
                 href
-                class="group flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
+                class="group block flex items-center px-4 py-3 space-x-6 rounded-xl hover:bg-secondary-750 focus:bg-secondary-750 focus:outline focus:outline-2 focus:outline-primary-400"
             >
                 <div class="relative size-6">
                     <div class="absolute -top-2 -left-2 size-10 rounded-full bg-primary-500 group-focus:bg-white"></div>
@@ -241,7 +241,7 @@ pub fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
     view! {
         <A
             href=href
-            class="px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
+            class="block px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
         >
             {msg}
         </A>
