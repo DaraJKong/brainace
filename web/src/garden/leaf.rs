@@ -1,9 +1,8 @@
 use crate::{
     error_template::ErrorTemplate,
     ui::{Card, ControlA, ControlAction, ControlBtn, Controls},
-    users::get_user,
 };
-use brainace_core::{Config, Leaf, Rating};
+use brainace_core::{Leaf, Rating};
 use chrono::{DateTime, Utc};
 use leptos::{
     component, create_resource, create_signal, leptos_server::Submission, server, view, Action,
@@ -48,7 +47,7 @@ pub async fn get_leaves(stem_id: u32) -> Result<Vec<Leaf>, ServerFnError> {
 
 #[server(GetAllLeaves, "/api")]
 pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
-    use crate::app::ssr::pool;
+    use crate::{app::ssr::pool, users::get_user};
     use brainace_core::SqlLeaf;
 
     let user = get_user().await?;
@@ -104,6 +103,7 @@ pub async fn review_leaf(
     now: DateTime<Utc>,
 ) -> Result<(), ServerFnError> {
     use crate::app::ssr::pool;
+    use brainace_core::Config;
 
     let pool = pool()?;
 

@@ -10,11 +10,9 @@ use leptos::{
 };
 use leptos_router::MultiActionForm;
 
-use crate::users::get_user;
-
 #[server(GetTree, "/api")]
 pub async fn get_tree() -> Result<Option<Tree>, ServerFnError> {
-    use crate::app::ssr::pool;
+    use crate::{app::ssr::pool, users::get_user};
     use brainace_core::SqlTree;
     use futures::future::OptionFuture;
 
