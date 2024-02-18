@@ -10,6 +10,7 @@ resolver = "2"
 [workspace.dependencies]
 anyhow = "1.0"
 serde = "1.0"
+serde_json = "1.0"
 chrono = "0.4"
 sqlx = "0.7"
 axum = "0.7"
@@ -20,6 +21,9 @@ cfg-if = "1.0.0"
 
 [patch.crates-io]
 leptos_icons = { git = "https://github.com/DaraJKong/leptos-icons.git" }
+
+[patch."https://github.com/open-spaced-repetition/rs-fsrs"]
+fsrs = { path = "../rs-fsrs" }
 
 # [patch."https://github.com/leptos-rs/leptos"]
 # leptos = { path = "../leptos/leptos" }

@@ -1596,7 +1596,6 @@ dependencies = [
 [[package]]
 name = "fsrs"
 version = "0.1.0"
-source = "git+https://github.com/open-spaced-repetition/rs-fsrs.git#90288dbb17654c242df76972dce2e4ffcce6aba3"
 dependencies = [
  "chrono",
  "serde",

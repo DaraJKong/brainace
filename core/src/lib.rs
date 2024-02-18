@@ -1,6 +1,6 @@
 pub mod auth;
 
-pub use fsrs::{Card, Rating};
+pub use fsrs::{Card, Rating, State};
 
 use chrono::{DateTime, Utc};
 use fsrs::FSRS;
