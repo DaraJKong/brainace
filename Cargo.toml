@@ -1,17 +1,28 @@
-[package]
-name = "brainace-desktop"
-version = "0.0.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-description = "Spaced repetition app for efficient organization and mastery of knowledge"
+[workspace]
+default-members = ["web"]
+members = [
+  "core",
+  "desktop",
+  "web"
+]
+resolver = "2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-iced = { git = "https://github.com/iced-rs/iced", features = ["tokio", "advanced"] }
-chrono = "0.4"
-tokio = { version = "1.35", features = ["fs", "rt"] }
+[workspace.dependencies]
+anyhow = "1.0"
 serde = "1.0"
-ron = "0.8"
-fsrs = { git = "https://github.com/open-spaced-repetition/rs-fsrs.git", features = ["serde"] }
-rfd = "0.12"
+chrono = "0.4"
+sqlx = "0.7"
+axum = "0.7"
+axum_session = "0.12"
+axum_session_auth = "0.12"
+async-trait = "0.1"
+cfg-if = "1.0.0"
+
+[patch.crates-io]
+leptos_icons = { git = "https://github.com/DaraJKong/leptos-icons.git" }
+
+# [patch."https://github.com/leptos-rs/leptos"]
+# leptos = { path = "../leptos/leptos" }
+# leptos_meta = { path = "../leptos/meta" }
+# leptos_router = { path = "../leptos/router" }
+# leptos_axum = { path = "../leptos/integrations/axum" }
