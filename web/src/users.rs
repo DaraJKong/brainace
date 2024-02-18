@@ -1,5 +1,5 @@
 use crate::ui::{
-    ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
+    Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
     SideBarItemCircle, SideBarItems,
 };
 use brainace_core::auth::User;

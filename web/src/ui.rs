@@ -160,6 +160,18 @@ pub fn Controls<'a>(#[prop(optional)] class: Option<&'a str>, children: Children
 }
 
 #[component]
+pub fn ControlA<'a>(href: &'a str, size: &'a str, icon: Icon) -> impl IntoView {
+    let href = href.to_string();
+    let size = size.to_string();
+
+    view! {
+        <A href class="group block size-8 p-1.5 text-white hover:bg-primary-500">
+            <Icon icon=icon class=format!("size-{} group-hover:scale-105", size)/>
+        </A>
+    }
+}
+
+#[component]
 pub fn ControlBtn<F, 'a>(on_click: F, size: &'a str, icon: Icon) -> impl IntoView
 where
     F: FnMut(MouseEvent) + 'static,

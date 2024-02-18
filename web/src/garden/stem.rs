@@ -1,7 +1,9 @@
 use crate::{
     error_template::ErrorTemplate,
     garden::leaf::{get_leaves, AddLeaf, DeleteLeaf, Leaves},
-    ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
+    ui::{
+        Card, ControlA, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal,
+    },
 };
 use brainace_core::Stem;
 use leptos::{
@@ -318,7 +320,7 @@ pub fn StemOverview(
                 <p class="text-2xl text-center text-white hyphens-auto">{stem.name()}</p>
             </A>
             <Controls class="absolute -top-4 right-4">
-                <ControlBtn on_click=move |_| {} size="5" icon=icondata::FaPencilSolid/>
+                <ControlA href=&format!("/stem/{}", id) size="5" icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_stem
                     on_submit=move |_| {}

@@ -1,6 +1,6 @@
 use crate::{
     error_template::ErrorTemplate,
-    ui::{Card, ControlAction, ControlBtn, Controls},
+    ui::{Card, ControlA, ControlAction, ControlBtn, Controls},
     users::get_user,
 };
 use brainace_core::{Config, Leaf, Rating};
@@ -312,6 +312,7 @@ pub fn LeafOverview(
                     size="5"
                     icon=icondata::FaEyeRegular
                 />
+                <ControlA href=&format!("/leaf/{}", id) size="5" icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_leaf
                     on_submit=move |_| {}
