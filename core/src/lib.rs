@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod utils;
 
 pub use fsrs::{Card, Rating, State};
 

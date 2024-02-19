@@ -3,8 +3,7 @@ use crate::{
     garden::leaf::get_all_leaves,
     ui::{ActionA, Card, FormH1, Loading},
 };
-use brainace_core::State;
-use chrono::{Datelike, Utc};
+use brainace_core::{utils, State};
 use leptos::{component, create_resource, view, ErrorBoundary, IntoView, Transition};
 
 #[component]
@@ -12,33 +11,9 @@ pub fn Dashboard() -> impl IntoView {
     let leaves = create_resource(|| (), move |_| get_all_leaves());
 
     let total = move || leaves().unwrap().unwrap().len();
-    let states = move || {
-        leaves().unwrap().unwrap().iter().fold(
-            (0u32, 0u32, 0u32, 0u32),
-            |(new, learning, review, relearning), leaf| match leaf.card().state {
-                State::New => (new + 1, learning, review, relearning),
-                State::Learning => (new, learning + 1, review, relearning),
-                State::Review => (new, learning, review + 1, relearning),
-                State::Relearning => (new, learning, review, relearning + 1),
-            },
-        )
-    };
-    let due_today = move || {
-        leaves()
-            .unwrap()
-            .unwrap()
-            .into_iter()
-            .filter(|leaf| leaf.card().due.num_days_from_ce() <= Utc::now().num_days_from_ce())
-            .count()
-    };
-    let due_now = move || {
-        leaves()
-            .unwrap()
-            .unwrap()
-            .into_iter()
-            .filter(|leaf| leaf.card().due.timestamp_millis() <= Utc::now().timestamp_millis())
-            .count()
-    };
+    let states = move || utils::count_states(leaves().unwrap().unwrap());
+    let due_today = move || utils::count_due_today(leaves().unwrap().unwrap());
+    let due_now = move || utils::count_due_now(leaves().unwrap().unwrap());
 
     view! {
         <Transition fallback=move || view! { <Loading/> }>

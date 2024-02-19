@@ -3,8 +3,8 @@ use crate::{
     garden::leaf::{get_all_leaves, review_leaf, Leaf},
     ui::{ActionA, ActionBtn, Loading},
 };
-use brainace_core::{Leaf, Rating};
-use chrono::{Datelike, Utc};
+use brainace_core::{utils, Leaf, Rating};
+use chrono::Utc;
 use leptos::{
     component, create_resource, create_signal, provide_context, spawn_local, use_context, view,
     ErrorBoundary, IntoView, SignalUpdate, Transition, WriteSignal,
@@ -33,14 +33,7 @@ pub fn ReviewToday() -> impl IntoView {
                                     view! { <p class="text-white">"No leaves were found."</p> }
                                         .into_view()
                                 } else {
-                                    let due_today_leaves = leaves
-                                        .clone()
-                                        .into_iter()
-                                        .filter(|leaf| {
-                                            leaf.card().due.num_days_from_ce()
-                                                <= Utc::now().num_days_from_ce()
-                                        })
-                                        .collect::<Vec<_>>();
+                                    let due_today_leaves = utils::filter_due_today(leaves);
                                     provide_context(due_today_leaves);
                                     view! { <Review/> }
                                 }
@@ -76,14 +69,7 @@ pub fn ReviewNow() -> impl IntoView {
                                     view! { <p class="text-white">"No leaves were found."</p> }
                                         .into_view()
                                 } else {
-                                    let due_now_leaves = leaves
-                                        .clone()
-                                        .into_iter()
-                                        .filter(|leaf| {
-                                            leaf.card().due.timestamp_millis()
-                                                <= Utc::now().timestamp_millis()
-                                        })
-                                        .collect::<Vec<_>>();
+                                    let due_now_leaves = utils::filter_due_now(leaves);
                                     provide_context(due_now_leaves);
                                     view! { <Review/> }
                                 }
