@@ -267,7 +267,7 @@ pub fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
     view! {
         <A
             href=href
-            class="block px-6 py-2 rounded-md bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
+            class="block px-6 py-2 rounded-md text-center bg-primary-500 text-white hover:scale-105 hover:bg-primary-400 focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-primary-300 focus:ring-offset-secondary-870 transition ease-out"
         >
             {msg}
         </A>
