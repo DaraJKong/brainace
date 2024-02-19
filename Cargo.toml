@@ -23,7 +23,7 @@ cfg-if = "1.0.0"
 leptos_icons = { git = "https://github.com/DaraJKong/leptos-icons.git" }
 
 [patch."https://github.com/open-spaced-repetition/rs-fsrs"]
-fsrs = { path = "../rs-fsrs" }
+fsrs = { git = "https://github.com/DaraJKong/rs-fsrs.git" }
 
 # [patch."https://github.com/leptos-rs/leptos"]
 # leptos = { path = "../leptos/leptos" }
