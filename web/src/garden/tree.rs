@@ -60,42 +60,42 @@ pub fn Tree() -> impl IntoView {
                         })
                         .unwrap_or_default()
                 }}
+                <Modal
+                    id="add_branch_modal"
+                    show=show_modal
+                    on_blur=move |_| set_show_modal.update(|x| *x = false)
+                >
+                    <Card class="w-1/3 p-6">
+                        <MultiActionForm
+                            action=add_branch
+                            on:submit=move |_| set_show_modal.update(|x| *x = false)
+                        >
+                            <FormH1 text="Create a new branch"/>
+                            {move || {
+                                tree()
+                                    .map(|tree| {
+                                        tree.map(|tree| {
+                                            tree.map(|tree| {
+                                                view! {
+                                                    <input type="hidden" name="tree_id" value=tree.id()/>
+                                                }
+                                            })
+                                        })
+                                    })
+                            }}
 
+                            <FormInput
+                                input_type="text"
+                                id="Name"
+                                label="Name"
+                                placeholder="Name"
+                                name="name"
+                            />
+                            <FormSubmit msg="ADD"/>
+                        </MultiActionForm>
+                    </Card>
+                </Modal>
             </ErrorBoundary>
         </Transition>
-        <Modal
-            id="add_branch_modal"
-            show=show_modal
-            on_blur=move |_| set_show_modal.update(|x| *x = false)
-        >
-            <Card class="w-1/3 p-6">
-                <MultiActionForm
-                    action=add_branch
-                    on:submit=move |_| set_show_modal.update(|x| *x = false)
-                >
-                    <FormH1 text="Create a new branch"/>
-                    {move || {
-                        tree.and_then(|tree| {
-                            view! {
-                                <input
-                                    type="hidden"
-                                    name="tree_id"
-                                    value=tree.as_ref().unwrap().id()
-                                />
-                            }
-                        })
-                    }}
-
-                    <FormInput
-                        input_type="text"
-                        id="Name"
-                        label="Name"
-                        placeholder="Name"
-                        name="name"
-                    />
-                    <FormSubmit msg="ADD"/>
-                </MultiActionForm>
-            </Card>
-        </Modal>
     }
 }
