@@ -12,7 +12,7 @@ use crate::{
     },
     review::{ReviewNow, ReviewToday},
     ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
-    users::{get_user, Login, LoginSection, Logout, Signup},
+    users::{get_user, Login, LoginSection, Logout, Profile, Signup},
 };
 
 #[cfg(feature = "ssr")]
@@ -96,6 +96,7 @@ pub fn App() -> impl IntoView {
                     <Route path="/stem/:id" view=Stem/>
                     <Route path="/leaf" view=NoLeaf/>
                     <Route path="/leaf/:id" view=LeafDetails/>
+                    <Route path="/profile" view=move || view! { <Profile user logout/> }/>
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                 </Route>

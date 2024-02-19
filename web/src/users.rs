@@ -1,10 +1,14 @@
-use crate::ui::{
-    Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
-    SideBarItemCircle, SideBarItems,
+use crate::{
+    error_template::ErrorTemplate,
+    ui::{
+        Card, FormCheckbox, FormH1, FormInput, FormSubmit, Loading, ServerAction, SideBarAction,
+        SideBarItem, SideBarItemCircle, SideBarItems,
+    },
 };
 use brainace_core::auth::User;
 use leptos::{
-    component, server, view, Action, IntoView, Resource, ServerFnError, SignalGet, Suspense,
+    component, server, view, Action, ErrorBoundary, IntoView, Resource, ServerFnError, SignalGet,
+    Suspense, Transition,
 };
 use leptos_router::{ActionForm, A};
 
@@ -105,6 +109,59 @@ pub async fn logout() -> Result<(), ServerFnError> {
     leptos_axum::redirect("/");
 
     Ok(())
+}
+
+#[component]
+pub fn Profile(
+    user: Resource<(usize, usize, usize), Result<Option<User>, ServerFnError>>,
+    logout: Action<Logout, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    view! {
+        <Transition fallback=move || {
+            view! { <Loading/> }
+        }>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors/> }
+            }>
+                {move || {
+                    user()
+                        .map(|user| match user {
+                            Err(e) => {
+                                view! {
+                                    <pre class="text-white">"Server Error: " {e.to_string()}</pre>
+                                }
+                                    .into_view()
+                            }
+                            Ok(None) => {
+                                view! {
+                                    <div class="text-lg text-secondary-630">
+                                        <p>"You are not connected."</p>
+                                        <A
+                                            href="/signup"
+                                            class="text-lg font-medium text-primary-500"
+                                        >
+                                            "Sign In"
+                                        </A>
+                                        <p>"?"</p>
+                                    </div>
+                                }
+                                    .into_view()
+                            }
+                            Ok(Some(user)) => {
+                                view! {
+                                    <div class="flex items-center space-x-4">
+                                        <p class="text-2xl text-white">{user.username}</p>
+                                        <ServerAction action=logout msg="LOG OUT"/>
+                                    </div>
+                                }
+                                    .into_view()
+                            }
+                        })
+                }}
+
+            </ErrorBoundary>
+        </Transition>
+    }
 }
 
 #[component]
