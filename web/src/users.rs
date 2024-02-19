@@ -194,7 +194,7 @@ pub fn LoginSection(
     let login_signup_buttons = move || {
         view! {
             <SideBarItems>
-                <SideBarItem href="/login" icon=icondata::FiLogIn text="LOG IN"/>
+                <SideBarItem href="/login" icon=icondata::LuLogIn text="LOG IN"/>
             </SideBarItems>
         }
     };
@@ -211,12 +211,12 @@ pub fn LoginSection(
                                 <SideBarItems>
                                     <SideBarItemCircle
                                         href="/profile"
-                                        icon=icondata::FaUserSolid
+                                        icon=icondata::LuUser2
                                         text="PROFILE"
                                     />
                                     <SideBarAction
                                         action=logout
-                                        icon=icondata::FiLogOut
+                                        icon=icondata::LuLogOut
                                         text="LOG OUT"
                                     />
                                 </SideBarItems>

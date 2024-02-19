@@ -1,4 +1,5 @@
 pub mod app;
+pub mod dashboard;
 pub mod error_template;
 pub mod errors;
 #[cfg(feature = "ssr")]

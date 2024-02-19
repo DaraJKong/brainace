@@ -3,13 +3,14 @@ use leptos_meta::{provide_meta_context, Body, Html, Link, Stylesheet, Title};
 use leptos_router::{Outlet, Route, Router, Routes, A};
 
 use crate::{
+    dashboard::Dashboard,
     garden::{
         branch::{Branch, NoBranch},
         leaf::{LeafDetails, NoLeaf},
         stem::{NoStem, Stem},
         tree::Tree,
     },
-    review::Review,
+    review::{ReviewNow, ReviewToday},
     ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
     users::{get_user, Login, LoginSection, Logout, Signup},
 };
@@ -67,16 +68,13 @@ pub fn App() -> impl IntoView {
                                     <img src="/Brainace_Banner_Dark.svg" class="outline-none"/>
                                 </A>
                                 <SideBarItems>
-                                    <SideBarItem
-                                        href="/"
-                                        icon=icondata::FaHouseSolid
-                                        text="DASHBOARD"
-                                    />
+                                    <SideBarItem href="/" icon=icondata::LuHome text="DASHBOARD"/>
                                     <SideBarItem
                                         href="/review"
-                                        icon=icondata::FaBrainSolid
-                                        text="REVIEW ALL"
+                                        icon=icondata::LuBrain
+                                        text="REVIEW"
                                     />
+                                    <SideBarItem href="/tree" icon=icondata::LuTrees text="TREE"/>
                                 </SideBarItems>
                                 <SideBarSeparator/>
                                 <LoginSection user logout/>
@@ -90,7 +88,8 @@ pub fn App() -> impl IntoView {
                     }
                 >
 
-                    <Route path="/" view=Tree/>
+                    <Route path="/" view=Dashboard/>
+                    <Route path="/tree" view=Tree/>
                     <Route path="/branch" view=NoBranch/>
                     <Route path="/branch/:id" view=Branch/>
                     <Route path="/stem" view=NoStem/>
@@ -100,7 +99,8 @@ pub fn App() -> impl IntoView {
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                 </Route>
-                <Route path="/review" view=Review/>
+                <Route path="/review-today" view=ReviewToday/>
+                <Route path="/review" view=ReviewNow/>
             </Routes>
         </Router>
     }
