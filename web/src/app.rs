@@ -1,12 +1,17 @@
-use leptos::{component, create_resource, create_server_action, view, IntoView, SignalGet};
+use leptos::{
+    component, create_resource, create_rw_signal, create_server_action, provide_context, view,
+    ErrorBoundary, IntoView, SignalGet, Transition,
+};
 use leptos_meta::{provide_meta_context, Body, Html, Link, Stylesheet, Title};
 use leptos_router::{Outlet, Route, Router, Routes, A};
 
 use crate::{
+    error_template::ErrorTemplate,
     garden::{
-        branch::{Branch, Branches, NoBranch},
+        branch::{Branch, NoBranch},
         leaf::{LeafDetails, NoLeaf},
         stem::{NoStem, Stem},
+        tree::{get_user_tree, Tree},
     },
     review::Review,
     ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
@@ -47,6 +52,17 @@ pub fn App() -> impl IntoView {
         move |_| get_user(),
     );
 
+    let tree = create_resource(
+        move || {
+            (
+                login.version().get(),
+                signup.version().get(),
+                logout.version().get(),
+            )
+        },
+        move |_| get_user_tree(),
+    );
+
     provide_meta_context();
 
     view! {
@@ -82,24 +98,84 @@ pub fn App() -> impl IntoView {
                             </SideBar>
                             <SideContent>
                                 <main class="flex-1 flex-col container mx-auto py-8">
-                                    <Outlet/>
+                                    <Transition fallback=move || {
+                                        view! { <p class="text-2xl text-white">"Loading..."</p> }
+                                    }>
+                                        {move || {
+                                            if let Some(Ok(tree)) = tree() {
+                                                let tree = create_rw_signal(tree.clone());
+                                                provide_context(tree);
+                                            }
+                                            view! { <Outlet/> }
+                                        }}
+
+                                    </Transition>
                                 </main>
                             </SideContent>
                         }
                     }
                 >
 
-                    <Route path="/" view=Branches/>
+                    <Route path="/" view=Tree/>
                     <Route path="/branch" view=NoBranch/>
                     <Route path="/branch/:id" view=Branch/>
                     <Route path="/stem" view=NoStem/>
                     <Route path="/stem/:id" view=Stem/>
                     <Route path="/leaf" view=NoLeaf/>
                     <Route path="/leaf/:id" view=LeafDetails/>
+                    <Route
+                        path="/profile"
+                        view=move || {
+                            view! {
+                                <Transition fallback=move || {
+                                    view! { <p class="text-xl text-white">"Loading user..."</p> }
+                                }>
+                                    <ErrorBoundary fallback=|errors| {
+                                        view! { <ErrorTemplate errors/> }
+                                    }>
+                                        <p class="text-xl text-primary-400">
+                                            {user()
+                                                .map(|user| {
+                                                    user.map(|user| user.map(|user| { user.username }))
+                                                })}
+
+                                        </p>
+                                        <p class="text-white">
+                                            {user()
+                                                .map(|user| {
+                                                    user.map(|user| user.map(|user| { user.password }))
+                                                })}
+
+                                        </p>
+                                    </ErrorBoundary>
+                                </Transition>
+                            }
+                        }
+                    />
+
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
                 </Route>
-                <Route path="/review" view=Review/>
+                <Route
+                    path="/review"
+                    view=move || {
+                        view! {
+                            <Transition fallback=move || {
+                                view! { <p class="text-2xl text-white">"Loading..."</p> }
+                            }>
+                                {move || {
+                                    if let Some(Ok(tree)) = tree() {
+                                        let tree = create_rw_signal(tree.clone());
+                                        provide_context(tree);
+                                    }
+                                    view! { <Review/> }
+                                }}
+
+                            </Transition>
+                        }
+                    }
+                />
+
             </Routes>
         </Router>
     }

@@ -15,6 +15,7 @@ sqlx = "0.7"
 axum = "0.7"
 axum_session = "0.12"
 axum_session_auth = "0.12"
+futures = "0.3"
 async-trait = "0.1"
 cfg-if = "1.0.0"
 

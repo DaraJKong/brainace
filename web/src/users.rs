@@ -1,5 +1,5 @@
 use crate::ui::{
-    ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
+    Card, FormCheckbox, FormH1, FormInput, FormSubmit, SideBarAction, SideBarItem,
     SideBarItemCircle, SideBarItems,
 };
 use brainace_core::auth::User;
@@ -80,6 +80,12 @@ pub async fn signup(
     let user = User::get_from_username(username, &pool)
         .await
         .ok_or_else(|| ServerFnError::new("Signup failed: User does not exist."))?;
+
+    sqlx::query("INSERT INTO trees (user_id, name) VALUES (?, ?)")
+        .bind(user.id)
+        .bind("Spruce")
+        .execute(&pool)
+        .await?;
 
     auth.login_user(user.id);
     auth.remember_user(remember.is_some());

@@ -3,12 +3,11 @@ use crate::{
     ui::{Card, ControlAction, ControlBtn, Controls},
     users::get_user,
 };
-use brainace_core::{Config, Leaf, Rating};
+use brainace_core::{Config, Leaf, Rating, Stem, Tree};
 use chrono::{DateTime, Utc};
 use leptos::{
-    component, create_resource, create_signal, leptos_server::Submission, server, view, Action,
-    CollectView, ErrorBoundary, IntoView, Params, ReadSignal, Resource, ServerFnError, SignalGet,
-    SignalUpdate, SignalWith, Transition,
+    component, create_server_action, create_signal, server, use_context, view, Action, CollectView,
+    ErrorBoundary, IntoView, Params, ReadSignal, RwSignal, ServerFnError, SignalUpdate, SignalWith,
 };
 use leptos_router::{use_params, Params, A};
 
@@ -65,7 +64,9 @@ pub async fn get_all_leaves() -> Result<Vec<Leaf>, ServerFnError> {
                 ON s.id = l.stem_id
             INNER JOIN branches b
                 ON b.id = s.branch_id
-                AND b.user_id = ?",
+            INNER JOIN trees t
+                ON t.id = b.tree_id
+                AND t.user_id = ?",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -138,70 +139,25 @@ pub async fn delete_leaf(id: u32) -> Result<(), ServerFnError> {
 }
 
 #[component]
-pub fn Leaves(
-    leaves: Resource<(usize, usize), Result<Vec<Leaf>, ServerFnError>>,
-    delete_leaf: Action<DeleteLeaf, Result<(), ServerFnError>>,
-    submissions: ReadSignal<Vec<Submission<AddLeaf, Result<(), ServerFnError>>>>,
-) -> impl IntoView {
-    view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    let existing_leaves = {
-                        move || {
-                            leaves
-                                .get()
-                                .map(move |leaves| match leaves {
-                                    Err(e) => {
-                                        view! { <pre>"Server Error: " {e.to_string()}</pre> }
-                                            .into_view()
-                                    }
-                                    Ok(leaves) => {
-                                        if leaves.is_empty() {
-                                            view! {
-                                                <p class="text-2xl text-white">"No leaves were found."</p>
-                                            }
-                                                .into_view()
-                                        } else {
-                                            leaves
-                                                .into_iter()
-                                                .map(move |leaf| {
-                                                    view! {
-                                                        <li>
-                                                            <LeafOverview leaf delete_leaf/>
-                                                        </li>
-                                                    }
-                                                })
-                                                .collect_view()
-                                        }
-                                    }
-                                })
-                                .unwrap_or_default()
-                        }
-                    };
-                    let pending_leaves = move || {
-                        submissions
-                            .get()
-                            .into_iter()
-                            .filter(|submission| submission.pending().get())
-                            .map(|submission| {
-                                view! {
-                                    <li>
-                                        <PendingLeaf input=submission.input.get()/>
-                                    </li>
-                                }
-                            })
-                            .collect_view()
-                    };
-                    view! {
-                        <ul class="flex flex-col space-y-6">{existing_leaves} {pending_leaves}</ul>
-                    }
-                }}
+pub fn Leaves(stem: Stem) -> impl IntoView {
+    let delete_leaf = create_server_action::<DeleteLeaf>();
 
-            </ErrorBoundary>
-        </Transition>
+    view! {
+        <ul class="flex flex-col space-y-6">
+            {move || {
+                stem.leaves()
+                    .into_iter()
+                    .map(move |leaf| {
+                        view! {
+                            <li>
+                                <LeafOverview leaf delete_leaf/>
+                            </li>
+                        }
+                    })
+                    .collect_view()
+            }}
+
+        </ul>
     }
 }
 
@@ -212,56 +168,53 @@ struct LeafParams {
 
 #[component]
 pub fn LeafDetails() -> impl IntoView {
+    let tree = use_context::<RwSignal<Tree>>();
+
     let params = use_params::<LeafParams>();
     let id =
         move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
 
-    let leaf = create_resource(id, move |_| get_leaf(id()));
+    let leaf = move || tree.map(|tree| tree().find_leaf(id()));
 
     view! {
-        <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
+        <ErrorBoundary fallback=|errors| {
+            view! { <ErrorTemplate errors=errors/> }
         }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    leaf.get()
-                        .map(move |leaf| match leaf {
-                            Err(e) => {
-                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
+            {move || {
+                leaf()
+                    .map(move |leaf| match leaf {
+                        Some(leaf) => {
+                            let card = leaf.card();
+                            let state = serde_json::to_string(&card.state);
+                            let previous_state = serde_json::to_string(&card.previous_state);
+                            let log = serde_json::to_string(&card.log);
+                            view! {
+                                <div class="text-xl text-white">
+                                    <p>"Front: " {leaf.front()}</p>
+                                    <p>"Back: " {leaf.back()}</p>
+                                    <p>"Created at: " {leaf.created_at().to_string()}</p>
+                                    <p>"Due: " {card.due.to_string()}</p>
+                                    <p>"Stability: " {card.stability}</p>
+                                    <p>"Difficulty: " {card.difficulty}</p>
+                                    <p>"Elapsed days: " {card.elapsed_days}</p>
+                                    <p>"Scheduled days: " {card.scheduled_days}</p>
+                                    <p>"Reps: " {card.reps}</p>
+                                    <p>"Lapses: " {card.lapses}</p>
+                                    <p>"State: " {state}</p>
+                                    <p>"Last review: " {card.last_review.to_string()}</p>
+                                    <p>"Previous state: " {previous_state}</p>
+                                    <p>"Log: " {log}</p>
+                                </div>
                             }
-                            Ok(leaf) => {
-                                let card = leaf.card();
-                                let state = serde_json::to_string(&card.state);
-                                let previous_state = serde_json::to_string(&card.previous_state);
-                                let log = serde_json::to_string(&card.log);
-                                view! {
-                                    <div class="text-xl text-white">
-                                        <p>"Front: " {leaf.front()}</p>
-                                        <p>"Back: " {leaf.back()}</p>
-                                        <p>"Created at: " {leaf.created_at().to_string()}</p>
-                                        <p>"Due: " {card.due.to_string()}</p>
-                                        <p>"Stability: " {card.stability}</p>
-                                        <p>"Difficulty: " {card.difficulty}</p>
-                                        <p>"Elapsed days: " {card.elapsed_days}</p>
-                                        <p>"Scheduled days: " {card.scheduled_days}</p>
-                                        <p>"Reps: " {card.reps}</p>
-                                        <p>"Lapses: " {card.lapses}</p>
-                                        <p>"State: " {state}</p>
-                                        <p>"Last review: " {card.last_review.to_string()}</p>
-                                        <p>"Previous state: " {previous_state}</p>
-                                        <p>"Log: " {log}</p>
-                                    </div>
-                                }
-                                    .into_view()
-                            }
-                        })
-                        .unwrap_or_default()
-                }}
+                                .into_view()
+                        }
+                        None => {
+                            view! { <p class="text-xl text-white">"No leaf found."</p> }.into_view()
+                        }
+                    })
+            }}
 
-            </ErrorBoundary>
-        </Transition>
+        </ErrorBoundary>
     }
 }
 

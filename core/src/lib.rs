@@ -4,6 +4,7 @@ pub use fsrs::{Card, Rating};
 
 use chrono::{DateTime, Utc};
 use fsrs::FSRS;
+use futures::future;
 use serde::{Deserialize, Serialize};
 
 use auth::User;
@@ -13,11 +14,63 @@ pub struct Config {
     pub fsrs: FSRS,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Branch {
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Tree {
     id: u32,
     user: Option<User>,
     name: String,
+    branches: Vec<Branch>,
+    created_at: String,
+}
+
+impl Tree {
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn branches(&self) -> Vec<Branch> {
+        self.branches.clone()
+    }
+
+    pub fn get_all_stems(&self) -> Vec<Stem> {
+        self.branches()
+            .into_iter()
+            .flat_map(|branch| branch.stems)
+            .collect()
+    }
+
+    pub fn get_all_leaves(&self) -> Vec<Leaf> {
+        self.branches()
+            .into_iter()
+            .flat_map(|branch| branch.stems.into_iter().flat_map(|stem| stem.leaves))
+            .collect()
+    }
+
+    pub fn find_branch(&self, branch_id: u32) -> Option<Branch> {
+        self.branches()
+            .into_iter()
+            .find(|branch| branch.id == branch_id)
+    }
+
+    pub fn find_stem(&self, stem_id: u32) -> Option<Stem> {
+        self.get_all_stems()
+            .into_iter()
+            .find(|stem| stem.id == stem_id)
+    }
+
+    pub fn find_leaf(&self, leaf_id: u32) -> Option<Leaf> {
+        self.get_all_leaves()
+            .into_iter()
+            .find(|stem| stem.id == leaf_id)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Branch {
+    id: u32,
+    tree_id: u32,
+    name: String,
+    stems: Vec<Stem>,
     created_at: String,
 }
 
@@ -29,13 +82,31 @@ impl Branch {
     pub fn name(&self) -> String {
         self.name.clone()
     }
+
+    pub fn stems(&self) -> Vec<Stem> {
+        self.stems.clone()
+    }
+
+    pub fn add_stem(&mut self, stem: Stem) {
+        self.stems.push(stem);
+    }
+
+    pub fn delete_stem(&mut self, id: u32) {
+        self.stems = self
+            .stems
+            .clone()
+            .into_iter()
+            .filter(|stem| stem.id != id)
+            .collect();
+    }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Stem {
     id: u32,
     branch_id: u32,
     name: String,
+    leaves: Vec<Leaf>,
     created_at: String,
 }
 
@@ -53,6 +124,10 @@ impl Stem {
 
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+
+    pub fn leaves(&self) -> Vec<Leaf> {
+        self.leaves.clone()
     }
 }
 
@@ -117,26 +192,64 @@ impl Leaf {
 cfg_if::cfg_if! { if #[cfg(feature = "auth")] {
     use sqlx::{FromRow, SqlitePool};
 
+    impl Tree {
+        pub async fn get_branches(tree_id: u32, pool: &SqlitePool) -> Result<Vec<Branch>, sqlx::Error> {
+            Ok(
+                future::join_all(sqlx::query_as::<_, SqlBranch>("SELECT * FROM branches WHERE tree_id = ?")
+                    .bind(tree_id)
+                    .fetch_all(pool)
+                    .await?.into_iter().map(|sql_branch| sql_branch.into_branch(pool))).await
+            )
+        }
+    }
+
     #[derive(FromRow)]
-    pub struct SqlBranch {
+    pub struct SqlTree {
         pub id: u32,
         pub user_id: i64,
         pub name: String,
         pub created_at: String,
     }
 
+    impl SqlTree {
+        pub async fn into_tree(&self, pool: &SqlitePool) -> Tree {
+            Tree { id: self.id, user: User::get(self.user_id, pool).await, name: self.name.clone(), branches: Tree::get_branches(self.id, pool).await.unwrap_or_default(), created_at: self.created_at.clone() }
+        }
+    }
+
+    impl Branch {
+        pub async fn get_stems(branch_id: u32, pool: &SqlitePool) -> Result<Vec<Stem>, sqlx::Error> {
+            Ok(
+                future::join_all(sqlx::query_as::<_, SqlStem>("SELECT * FROM stems WHERE branch_id = ?")
+                    .bind(branch_id)
+                    .fetch_all(pool)
+                    .await?.into_iter().map(|sql_stem| sql_stem.into_stem(pool))).await
+            )
+        }
+    }
+
+    #[derive(FromRow)]
+    pub struct SqlBranch {
+        pub id: u32,
+        pub tree_id: u32,
+        pub name: String,
+        pub created_at: String,
+    }
+
     impl SqlBranch {
-        pub async fn into_branch(&self, pool: &SqlitePool) -> Branch {
-            Branch { id: self.id, user: User::get(self.user_id, pool).await, name: self.name.clone(), created_at: self.created_at.clone() }
+        pub async fn into_branch(self, pool: &SqlitePool) -> Branch {
+            Branch { id: self.id, tree_id: self.tree_id, name: self.name.clone(), stems: Branch::get_stems(self.id, pool).await.unwrap_or_default(), created_at: self.created_at.clone() }
         }
     }
 
     impl Stem {
-        pub async fn get_leaves(stem_id: i64, pool: &SqlitePool) -> Option<Vec<Leaf>> {
-            sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE stem_id = ?")
-                .bind(stem_id)
-                .fetch_all(pool)
-                .await.ok().map(|sql_leaves| sql_leaves.iter().map(|sql_leaf| sql_leaf.into_leaf()).collect())
+        pub async fn get_leaves(stem_id: u32, pool: &SqlitePool) -> Result<Vec<Leaf>, sqlx::Error> {
+            Ok(
+                sqlx::query_as::<_, SqlLeaf>("SELECT * FROM leaves WHERE stem_id = ?")
+                    .bind(stem_id)
+                    .fetch_all(pool)
+                    .await?.iter().map(|sql_leaf| sql_leaf.into_leaf()).collect()
+            )
         }
     }
 
@@ -149,8 +262,10 @@ cfg_if::cfg_if! { if #[cfg(feature = "auth")] {
     }
 
     impl SqlStem {
-        pub fn into_stem(&self) -> Stem {
-            Stem { id: self.id, branch_id: self.branch_id, name: self.name.clone(), created_at: self.created_at.clone() }
+        pub async fn into_stem(self, pool: &SqlitePool) -> Stem {
+            Stem {
+                id: self.id, branch_id: self.branch_id, name: self.name.clone(), leaves: Stem::get_leaves(self.id, pool).await.unwrap_or(Vec::new()), created_at: self.created_at.clone()
+            }
         }
     }
 

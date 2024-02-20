@@ -15,6 +15,7 @@ sqlx = { workspace = true, features = [
 	"sqlite",
 ], optional = true }
 axum_session_auth = { workspace = true, features = ["sqlite-rustls"], optional = true }
+futures.workspace = true
 async-trait = { workspace = true, optional = true }
 cfg-if.workspace = true
 

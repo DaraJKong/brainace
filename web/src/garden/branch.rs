@@ -1,16 +1,13 @@
 use crate::{
-    error_template::ErrorTemplate,
     garden::stem::{AddStem, Stems},
     ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
-    users::get_user,
 };
-use brainace_core::Branch;
+use brainace_core::{Branch, Tree};
 use leptos::{
-    component, create_resource, create_server_action, create_server_multi_action, create_signal,
-    server, view, CollectView, ErrorBoundary, IntoView, Params, ServerFnError, SignalGet,
-    SignalUpdate, SignalWith, Transition,
+    component, create_server_action, create_server_multi_action, create_signal, server,
+    use_context, view, IntoView, Params, RwSignal, ServerFnError, SignalGet, SignalUpdate,
+    SignalWith,
 };
-use leptos_icons::Icon;
 use leptos_router::{use_navigate, use_params, MultiActionForm, Params, A};
 
 #[server(GetBranch, "/api")]
@@ -30,46 +27,15 @@ pub async fn get_branch(id: u32) -> Result<Branch, ServerFnError> {
     )
 }
 
-#[server(GetBranches, "/api")]
-pub async fn get_branches() -> Result<Vec<Branch>, ServerFnError> {
-    use crate::app::ssr::pool;
-    use brainace_core::SqlBranch;
-    use futures::future::join_all;
-
-    let user = get_user().await?;
-    let pool = pool()?;
-
-    let id = match user {
-        Some(user) => user.id,
-        None => -1,
-    };
-
-    Ok(join_all(
-        sqlx::query_as::<_, SqlBranch>("SELECT * FROM branches WHERE user_id = ?")
-            .bind(id)
-            .fetch_all(&pool)
-            .await?
-            .iter()
-            .map(|branch| branch.into_branch(&pool)),
-    )
-    .await)
-}
-
 #[server(AddBranch, "/api")]
-pub async fn add_branch(name: String) -> Result<(), ServerFnError> {
+pub async fn add_branch(tree_id: u32, name: String) -> Result<(), ServerFnError> {
     use crate::app::ssr::pool;
 
-    let user = get_user().await?;
     let pool = pool()?;
-
-    let id = match user {
-        Some(user) => user.id,
-        None => -1,
-    };
 
     Ok(
-        sqlx::query("INSERT INTO branches (user_id, name) VALUES (?, ?)")
-            .bind(id)
+        sqlx::query("INSERT INTO branches (tree_id, name) VALUES (?, ?)")
+            .bind(tree_id)
             .bind(name)
             .execute(&pool)
             .await
@@ -110,112 +76,9 @@ struct BranchParams {
 }
 
 #[component]
-pub fn Branches() -> impl IntoView {
-    let (show_modal, set_show_modal) = create_signal(false);
-
-    let add_branch = create_server_multi_action::<AddBranch>();
-    let submissions = add_branch.submissions();
-
-    let branches = create_resource(
-        move || (add_branch.version().get()),
-        move |_| get_branches(),
-    );
-
-    view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    let existing_branches = {
-                        move || {
-                            branches
-                                .get()
-                                .map(move |branches| match branches {
-                                    Err(e) => {
-                                        view! { <pre>"Server Error: " {e.to_string()}</pre> }
-                                            .into_view()
-                                    }
-                                    Ok(branches) => {
-                                        if branches.is_empty() {
-                                            view! {
-                                                <p class="text-xl text-white">"No branches were found."</p>
-                                            }
-                                                .into_view()
-                                        } else {
-                                            branches
-                                                .into_iter()
-                                                .map(move |branch| {
-                                                    view! {
-                                                        <li>
-                                                            <BranchOverview branch=branch/>
-                                                        </li>
-                                                    }
-                                                })
-                                                .collect_view()
-                                        }
-                                    }
-                                })
-                                .unwrap_or_default()
-                        }
-                    };
-                    let pending_branches = move || {
-                        submissions
-                            .get()
-                            .into_iter()
-                            .filter(|submission| submission.pending().get())
-                            .map(|submission| {
-                                view! {
-                                    <li>
-                                        <PendingBranch input=submission.input.get()/>
-                                    </li>
-                                }
-                            })
-                            .collect_view()
-                    };
-                    view! {
-                        <ul class="flex flex-wrap items-center gap-6">
-                            {existing_branches} {pending_branches} <li>
-                                <button
-                                    on:click=move |_| set_show_modal.update(|x| *x = true)
-                                    class="block p-3 text-2xl text-white rounded-full bg-primary-600 hover:bg-primary-500 transition ease-out"
-                                >
-                                    <Icon icon=icondata::FaPlusSolid/>
-                                </button>
-                            </li>
-                        </ul>
-                    }
-                }}
-
-            </ErrorBoundary>
-        </Transition>
-        <Modal
-            id="add_branch_modal"
-            show=show_modal
-            on_blur=move |_| set_show_modal.update(|x| *x = false)
-        >
-            <Card class="w-1/3 p-6">
-                <MultiActionForm
-                    action=add_branch
-                    on:submit=move |_| set_show_modal.update(|x| *x = false)
-                >
-                    <FormH1 text="Create a new branch"/>
-                    <FormInput
-                        input_type="text"
-                        id="Name"
-                        label="Name"
-                        placeholder="Name"
-                        name="name"
-                    />
-                    <FormSubmit msg="ADD"/>
-                </MultiActionForm>
-            </Card>
-        </Modal>
-    }
-}
-
-#[component]
 pub fn Branch() -> impl IntoView {
+    let tree = use_context::<RwSignal<Tree>>();
+
     let (editing, set_editing) = create_signal(false);
     let (adding_stem, set_adding_stem) = create_signal(false);
 
@@ -227,66 +90,58 @@ pub fn Branch() -> impl IntoView {
     let id =
         move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
 
-    let branch = create_resource(
-        move || (id(), edit_branch.version().get()),
-        move |_| get_branch(id()),
-    );
+    let branch = move || tree.map(|tree| tree.get().find_branch(id()));
 
     view! {
-        <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
-        }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    branch
-                        .get()
-                        .map(move |branch| match branch {
-                            Err(e) => {
-                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
-                            }
-                            Ok(branch) => {
-                                view! {
-                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
-                                        <p class="text-4xl font-bold text-white tracking-wide">
-                                            {branch.name()}
-                                        </p>
-                                        <div class="grow"></div>
-                                        <Controls>
-                                            <ControlBtn
-                                                on_click=move |_| set_editing.update(|x| *x = true)
-                                                size="5"
-                                                icon=icondata::FaPencilSolid
-                                            />
-                                            <ControlBtn
-                                                on_click=move |_| set_adding_stem.update(|x| *x = true)
-                                                size="5"
-                                                icon=icondata::FaPlusSolid
-                                            />
-                                            <ControlAction
-                                                action=delete_branch
-                                                on_submit=move |_| {
-                                                    use_navigate()("/", Default::default());
-                                                }
+        {move || {
+            branch()
+                .map(|branch| match branch {
+                    Some(branch) => {
+                        view! {
+                            <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
+                                <p class="text-4xl font-bold text-white tracking-wide">
+                                    {branch.name()}
+                                </p>
+                                <div class="grow"></div>
+                                <Controls>
+                                    <ControlBtn
+                                        on_click=move |_| set_editing.update(|x| *x = true)
+                                        size="5"
+                                        icon=icondata::FaPencilSolid
+                                    />
+                                    <ControlBtn
+                                        on_click=move |_| set_adding_stem.update(|x| *x = true)
+                                        size="5"
+                                        icon=icondata::FaPlusSolid
+                                    />
+                                    <ControlAction
+                                        action=delete_branch
+                                        on_submit=move |_| {
+                                            use_navigate()("/", Default::default());
+                                        }
 
-                                                size="5"
-                                                icon=icondata::FaTrashCanRegular
-                                            >
-                                                <input type="hidden" name="id" value=id/>
-                                            </ControlAction>
-                                        </Controls>
-                                    </div>
-                                    <Stems branch_id=id() add_stem=add_stem/>
-                                }
-                                    .into_view()
-                            }
-                        })
-                        .unwrap_or_default()
-                }}
+                                        size="5"
+                                        icon=icondata::FaTrashCanRegular
+                                    >
+                                        <input type="hidden" name="id" value=id/>
+                                    </ControlAction>
+                                </Controls>
+                            </div>
+                            <Stems branch/>
+                        }
+                            .into_view()
+                    }
+                    None => {
+                        view! {
+                            <pre class="text-xl text-white">
+                                {move || format!("No branch with id {} found.", id())}
+                            </pre>
+                        }
+                            .into_view()
+                    }
+                })
+        }}
 
-            </ErrorBoundary>
-        </Transition>
         <Modal
             id="edit_branch_modal"
             show=editing

@@ -1,13 +1,12 @@
 use crate::{
-    error_template::ErrorTemplate,
-    garden::leaf::{get_leaves, AddLeaf, DeleteLeaf, Leaves},
+    garden::leaf::{AddLeaf, Leaves},
     ui::{Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Modal},
 };
-use brainace_core::Stem;
+use brainace_core::{Branch, Stem, Tree};
 use leptos::{
-    component, create_resource, create_server_action, create_server_multi_action, create_signal,
-    server, view, Action, CollectView, ErrorBoundary, IntoView, MultiAction, Params, ServerFnError,
-    SignalGet, SignalUpdate, SignalWith, Transition,
+    component, create_server_action, create_server_multi_action, create_signal, server,
+    use_context, view, Action, CollectView, IntoView, Params, RwSignal, ServerFnError, SignalGet,
+    SignalUpdate, SignalWith,
 };
 use leptos_router::{use_navigate, use_params, MultiActionForm, Params, A};
 
@@ -23,25 +22,8 @@ pub async fn get_stem(id: u32) -> Result<Stem, ServerFnError> {
             .bind(id)
             .fetch_one(&pool)
             .await?
-            .into_stem(),
-    )
-}
-
-#[server(GetStems, "/api")]
-pub async fn get_stems(branch_id: u32) -> Result<Vec<Stem>, ServerFnError> {
-    use crate::app::ssr::pool;
-    use brainace_core::SqlStem;
-
-    let pool = pool()?;
-
-    Ok(
-        sqlx::query_as::<_, SqlStem>("SELECT * FROM stems WHERE branch_id = ?")
-            .bind(branch_id)
-            .fetch_all(&pool)
-            .await?
-            .iter()
-            .map(|branch| branch.into_stem())
-            .collect(),
+            .into_stem(&pool)
+            .await,
     )
 }
 
@@ -89,75 +71,26 @@ pub async fn delete_stem(id: u32) -> Result<(), ServerFnError> {
 }
 
 #[component]
-pub fn Stems(
-    branch_id: u32,
-    add_stem: MultiAction<AddStem, Result<(), ServerFnError>>,
-) -> impl IntoView {
+pub fn Stems(branch: Branch) -> impl IntoView {
     let delete_stem = create_server_action::<DeleteStem>();
 
-    let submissions = add_stem.submissions();
-
-    let stems = create_resource(
-        move || (add_stem.version().get(), delete_stem.version().get()),
-        move |_| get_stems(branch_id),
-    );
-
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    let existing_stems = move || {
-                        stems
-                            .get()
-                            .map(|stems| match stems {
-                                Err(e) => {
-                                    view! { <pre>"Server Error: " {e.to_string()}</pre> }
-                                        .into_view()
-                                }
-                                Ok(stems) => {
-                                    if stems.is_empty() {
-                                        view! {
-                                            <p class="text-2xl text-white">"No stems were found."</p>
-                                        }
-                                            .into_view()
-                                    } else {
-                                        stems
-                                            .into_iter()
-                                            .map(|stem| {
-                                                view! {
-                                                    <li>
-                                                        <StemOverview stem=stem delete_stem=delete_stem/>
-                                                    </li>
-                                                }
-                                            })
-                                            .collect_view()
-                                    }
-                                }
-                            })
-                    };
-                    let pending_stems = move || {
-                        submissions
-                            .get()
-                            .into_iter()
-                            .filter(|submission| submission.pending().get())
-                            .map(|submission| {
-                                view! {
-                                    <li>
-                                        <PendingStem input=submission.input.get()/>
-                                    </li>
-                                }
-                            })
-                            .collect_view()
-                    };
-                    view! {
-                        <ul class="flex flex-col space-y-8">{existing_stems} {pending_stems}</ul>
-                    }
-                }}
+        <ul class="flex flex-col space-y-8">
+            {move || {
+                branch
+                    .stems()
+                    .into_iter()
+                    .map(|stem| {
+                        view! {
+                            <li>
+                                <StemOverview stem delete_stem/>
+                            </li>
+                        }
+                    })
+                    .collect_view()
+            }}
 
-            </ErrorBoundary>
-        </Transition>
+        </ul>
     }
 }
 
@@ -168,87 +101,71 @@ struct StemParams {
 
 #[component]
 pub fn Stem() -> impl IntoView {
+    let tree = use_context::<RwSignal<Tree>>();
+
     let (editing, set_editing) = create_signal(false);
     let (adding_leaf, set_adding_leaf) = create_signal(false);
 
     let edit_stem = create_server_multi_action::<EditStem>();
     let delete_stem = create_server_action::<DeleteStem>();
     let add_leaf = create_server_multi_action::<AddLeaf>();
-    let delete_leaf = create_server_action::<DeleteLeaf>();
 
     let params = use_params::<StemParams>();
     let id =
         move || params.with(|params| params.as_ref().map(|params| params.id).unwrap_or_default());
 
-    let stem = create_resource(
-        move || (id(), edit_stem.version().get()),
-        move |_| get_stem(id()),
-    );
-
-    let leaves = create_resource(
-        move || (add_leaf.version().get(), delete_leaf.version().get()),
-        move |_| get_leaves(id()),
-    );
-    let submissions = add_leaf.submissions();
+    let stem = move || tree.map(|tree| tree.get().find_stem(id()));
 
     view! {
-        <Transition fallback=move || {
-            view! { <p>"Loading..."</p> }
-        }>
-            <ErrorBoundary fallback=|errors| {
-                view! { <ErrorTemplate errors=errors/> }
-            }>
-                {move || {
-                    stem.get()
-                        .map(move |stem| match stem {
-                            Err(e) => {
-                                view! { <pre>"Server Error: " {e.to_string()}</pre> }.into_view()
-                            }
-                            Ok(stem) => {
-                                view! {
-                                    <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
-                                        <p class="text-4xl font-bold text-white tracking-wide">
-                                            {stem.name()}
-                                        </p>
-                                        <div class="grow"></div>
-                                        <Controls>
-                                            <ControlBtn
-                                                on_click=move |_| set_editing.update(|x| *x = true)
-                                                size="5"
-                                                icon=icondata::FaPencilSolid
-                                            />
-                                            <ControlBtn
-                                                on_click=move |_| set_adding_leaf.update(|x| *x = true)
-                                                size="5"
-                                                icon=icondata::FaPlusSolid
-                                            />
-                                            <ControlAction
-                                                action=delete_stem
-                                                on_submit=move |_| {
-                                                    use_navigate()("/", Default::default());
-                                                }
-
-                                                size="5"
-                                                icon=icondata::FaTrashCanRegular
-                                            >
-                                                <input type="hidden" name="id" value=id/>
-                                            </ControlAction>
-                                        </Controls>
-                                    </div>
-                                    <Leaves
-                                        leaves=leaves
-                                        delete_leaf=delete_leaf
-                                        submissions=submissions
+        {move || {
+            stem()
+                .map(|stem| match stem {
+                    Some(stem) => {
+                        view! {
+                            <div class="flex items-center h-16 px-8 py-1 mb-8 border-b-2 border-primary-500">
+                                <p class="text-4xl font-bold text-white tracking-wide">
+                                    {stem.name()}
+                                </p>
+                                <div class="grow"></div>
+                                <Controls>
+                                    <ControlBtn
+                                        on_click=move |_| set_editing.update(|x| *x = true)
+                                        size="5"
+                                        icon=icondata::FaPencilSolid
                                     />
-                                }
-                                    .into_view()
-                            }
-                        })
-                        .unwrap_or_default()
-                }}
+                                    <ControlBtn
+                                        on_click=move |_| set_adding_leaf.update(|x| *x = true)
+                                        size="5"
+                                        icon=icondata::FaPlusSolid
+                                    />
+                                    <ControlAction
+                                        action=delete_stem
+                                        on_submit=move |_| {
+                                            use_navigate()("/", Default::default());
+                                        }
 
-            </ErrorBoundary>
-        </Transition>
+                                        size="5"
+                                        icon=icondata::FaTrashCanRegular
+                                    >
+                                        <input type="hidden" name="id" value=id/>
+                                    </ControlAction>
+                                </Controls>
+                            </div>
+                            <Leaves stem/>
+                        }
+                            .into_view()
+                    }
+                    None => {
+                        view! {
+                            <pre class="text-xl text-white">
+                                {move || format!("No stem with id {} found.", id())}
+                            </pre>
+                        }
+                            .into_view()
+                    }
+                })
+        }}
+
         <Modal
             id="edit_stem_modal"
             show=editing
