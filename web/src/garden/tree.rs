@@ -1,8 +1,8 @@
-use crate::garden::branch::AddBranch;
+use crate::garden::branch::{AddBranch, PendingBranch};
 use brainace_core::Tree;
 use leptos::{
-    component, create_server_multi_action, create_signal, server, use_context, view, CollectView,
-    ErrorBoundary, IntoView, RwSignal, ServerFnError, SignalUpdate,
+    component, create_effect, create_server_multi_action, create_signal, server, use_context, view,
+    CollectView, ErrorBoundary, IntoView, RwSignal, ServerFnError, SignalGet, SignalUpdate,
 };
 use leptos_icons::Icon;
 use leptos_router::MultiActionForm;
@@ -27,6 +27,9 @@ pub async fn get_user_tree() -> Result<Tree, ServerFnError> {
         None => -1,
     };
 
+    // fake API delay
+    std::thread::sleep(std::time::Duration::from_millis(1250));
+
     Ok(
         sqlx::query_as::<_, SqlTree>("SELECT * FROM trees WHERE user_id = ?")
             .bind(id)
@@ -49,13 +52,29 @@ pub fn Tree() -> impl IntoView {
     };
 
     let add_branch = create_server_multi_action::<AddBranch>();
+    let submissions = add_branch.submissions();
+
+    create_effect(move |handled| {
+        let handled = handled.unwrap_or_default();
+        if add_branch.version().get() > handled {
+            if let Some(submission) = submissions.get().last() {
+                if let Some(Ok(value)) = submission.value.get() {
+                    tree.unwrap().update(|tree| {
+                        tree.add_branch(value.0, &value.1, value.2);
+                    });
+                    return handled + 1;
+                }
+            }
+        }
+        handled
+    });
 
     view! {
         <ErrorBoundary fallback=|errors| {
             view! { <ErrorTemplate errors=errors/> }
         }>
-            <ul class="flex flex-wrap items-center gap-6">
-                {move || match tree {
+            {move || {
+                let existing_branches = move || match tree {
                     None => {
                         view! { <pre class="text-xl text-white">"Loading branches..."</pre> }
                             .into_view()
@@ -78,16 +97,34 @@ pub fn Tree() -> impl IntoView {
                                 .collect_view()
                         }
                     }
-                }}
-                <li>
-                    <button
-                        on:click=move |_| set_show_modal.update(|x| *x = true)
-                        class="block p-3 text-2xl text-white rounded-full bg-primary-600 hover:bg-primary-500 transition ease-out"
-                    >
-                        <Icon icon=icondata::FaPlusSolid/>
-                    </button>
-                </li>
-            </ul>
+                };
+                let pending_branches = move || {
+                    submissions()
+                        .into_iter()
+                        .filter(|submission| submission.pending().get())
+                        .map(|submission| {
+                            view! {
+                                <li>
+                                    <PendingBranch input=submission.input.get()/>
+                                </li>
+                            }
+                        })
+                        .collect_view()
+                };
+                view! {
+                    <ul class="flex flex-wrap items-center gap-6">
+                        {existing_branches} {pending_branches} <li>
+                            <button
+                                on:click=move |_| set_show_modal.update(|x| *x = true)
+                                class="block p-3 text-2xl text-white rounded-full bg-primary-600 hover:bg-primary-500 transition ease-out"
+                            >
+                                <Icon icon=icondata::FaPlusSolid/>
+                            </button>
+                        </li>
+                    </ul>
+                }
+            }}
+
         </ErrorBoundary>
         <Modal
             id="add_branch_modal"

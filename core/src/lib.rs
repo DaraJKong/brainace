@@ -32,6 +32,11 @@ impl Tree {
         self.branches.clone()
     }
 
+    pub fn add_branch(&mut self, id: u32, name: &str, created_at: String) {
+        self.branches
+            .push(Branch::new(id, self.id, name, created_at));
+    }
+
     pub fn get_all_stems(&self) -> Vec<Stem> {
         self.branches()
             .into_iter()
@@ -75,6 +80,16 @@ pub struct Branch {
 }
 
 impl Branch {
+    pub fn new(id: u32, tree_id: u32, name: &str, created_at: String) -> Self {
+        Branch {
+            id,
+            tree_id,
+            name: name.to_string(),
+            stems: Vec::new(),
+            created_at,
+        }
+    }
+
     pub fn id(&self) -> u32 {
         self.id
     }

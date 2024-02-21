@@ -28,19 +28,32 @@ pub async fn get_branch(id: u32) -> Result<Branch, ServerFnError> {
 }
 
 #[server(AddBranch, "/api")]
-pub async fn add_branch(tree_id: u32, name: String) -> Result<(), ServerFnError> {
+pub async fn add_branch(
+    tree_id: u32,
+    name: String,
+) -> Result<(u32, String, String), ServerFnError> {
     use crate::app::ssr::pool;
+    use sqlx::Row;
 
     let pool = pool()?;
 
-    Ok(
-        sqlx::query("INSERT INTO branches (tree_id, name) VALUES (?, ?)")
-            .bind(tree_id)
-            .bind(name)
-            .execute(&pool)
-            .await
-            .map(|_| ())?,
+    // fake API delay
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    Ok(sqlx::query(
+        "INSERT INTO branches (tree_id, name) VALUES (?, ?) RETURNING id, name, created_at",
     )
+    .bind(tree_id)
+    .bind(name.clone())
+    .fetch_one(&pool)
+    .await
+    .map(|row| {
+        (
+            row.get::<u32, _>(0),
+            row.get::<String, _>(1),
+            row.get::<String, _>(2),
+        )
+    })?)
 }
 
 #[server(EditBranch, "/api")]
