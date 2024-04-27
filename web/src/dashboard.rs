@@ -86,13 +86,13 @@ pub fn DueCard(due_today: usize, due_now: usize) -> impl IntoView {
             <Card class="w-1/2">
                 <div class="grid grid-cols-2">
                     <div class="p-6">
-                        <FormH1 text="Due today"/>
-                        <FormH1 text=&format!("{}", due_today)/>
+                        <FormH1 text="Due today".to_string()/>
+                        <FormH1 text=format!("{}", due_today)/>
                         <ActionA href="/review-today" msg="REVIEW ALL"/>
                     </div>
                     <div class="p-6">
-                        <FormH1 text="Due now"/>
-                        <FormH1 text=&format!("{}", due_now)/>
+                        <FormH1 text="Due now".to_string()/>
+                        <FormH1 text=format!("{}", due_now)/>
                         <ActionA href="/review" msg="REVIEW"/>
                     </div>
                 </div>

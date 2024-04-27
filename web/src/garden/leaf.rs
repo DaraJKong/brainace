@@ -294,38 +294,41 @@ pub fn LeafOverview(
 ) -> impl IntoView {
     let (hidden, set_hidden) = create_signal(true);
 
-    let id = leaf.id();
+    let id = format!("/leaf/{}", leaf.id());
+    let color = format!(
+        "inline-block size-5 {}",
+        match leaf.card().state.clone() {
+            State::New => "text-lime-500",
+            State::Learning => "text-cyan-500",
+            State::Review => "text-emerald-500",
+            State::Relearning => "text-rose-500",
+        },
+    );
+    let state = format!("{:?}", leaf.card().state);
+    let front = leaf.front();
+    let back = leaf.back();
 
     view! {
         <Card class="mx-auto relative w-1/2 hover:scale-105 hover:border-primary-500 transition ease-out">
-            <A href=format!("/leaf/{}", id) class="flex place-items-center">
+            <A href=id.clone() class="flex place-items-center">
                 <div class="w-40 p-5 shrink-0">
                     <Icon
                         icon=icondata::FaLeafSolid
-                        class=format!(
-                            "inline-block size-5 {}",
-                            match leaf.card().state {
-                                State::New => "text-lime-500",
-                                State::Learning => "text-cyan-500",
-                                State::Review => "text-emerald-500",
-                                State::Relearning => "text-rose-500",
-                            },
-                        )
+                        class=color
                     />
-
                     <span class="ml-2 font-medium text-white">
-                        {format!("{:?}", leaf.card().state)}
+                        {state}
                     </span>
                 </div>
                 <div class="grow border-l-2 border-secondary-750">
                     <div class="p-5">
-                        <p class="text-2xl text-center text-white hyphens-auto">{leaf.front()}</p>
+                        <p class="text-2xl text-center text-white hyphens-auto">{front}</p>
                     </div>
                     <div class=("hidden", hidden)>
                         <hr class="border-t-1 border-secondary-750"/>
                         <div class="p-5">
                             <p class="text-2xl text-center text-primary-500 hyphens-auto">
-                                {leaf.back()}
+                                {back}
                             </p>
                         </div>
                     </div>
@@ -337,14 +340,14 @@ pub fn LeafOverview(
                     size="5"
                     icon=icondata::FaEyeRegular
                 />
-                <ControlA href=&format!("/leaf/{}", id) size="5" icon=icondata::FaPencilSolid/>
+                <ControlA href=id size="5".to_string() icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_leaf
                     on_submit=move |_| {}
                     size="5"
                     icon=icondata::FaTrashCanRegular
                 >
-                    <input type="hidden" name="id" value=id/>
+                    <input type="hidden" name="id" value=leaf.id()/>
                 </ControlAction>
             </Controls>
         </Card>

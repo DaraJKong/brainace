@@ -170,7 +170,7 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
         <div class="h-full flex flex-col justify-center items-center">
             <Card class="w-1/3 p-6">
                 <ActionForm action=action>
-                    <FormH1 text="Log in"/>
+                    <FormH1 text="Log in".to_string()/>
                     <FormInput
                         input_type="text"
                         id="username"
@@ -206,7 +206,7 @@ pub fn Signup(action: Action<Signup, Result<(), ServerFnError>>) -> impl IntoVie
         <div class="h-full flex flex-col justify-center items-center">
             <Card class="w-1/3 p-6">
                 <ActionForm action=action>
-                    <FormH1 text="Create your account"/>
+                    <FormH1 text="Create your account".to_string()/>
                     <FormInput
                         input_type="text"
                         id="username"

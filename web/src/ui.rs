@@ -174,10 +174,7 @@ pub fn Controls<'a>(#[prop(optional)] class: Option<&'a str>, children: Children
 }
 
 #[component]
-pub fn ControlA<'a>(href: &'a str, size: &'a str, icon: Icon) -> impl IntoView {
-    let href = href.to_string();
-    let size = size.to_string();
-
+pub fn ControlA(href: String, size: String, icon: Icon) -> impl IntoView {
     view! {
         <A href class="group block size-8 p-1.5 text-white hover:bg-primary-500">
             <Icon icon=icon class=format!("size-{} group-hover:scale-105", size)/>
@@ -275,9 +272,7 @@ pub fn ActionA<'a>(href: &'a str, msg: &'a str) -> impl IntoView {
 }
 
 #[component]
-pub fn FormH1<'a>(text: &'a str) -> impl IntoView {
-    let text = text.to_string();
-
+pub fn FormH1(text: String) -> impl IntoView {
     view! { <h1 class="text-center text-4xl mb-4 text-white">{text}</h1> }
 }
 

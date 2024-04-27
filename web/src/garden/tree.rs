@@ -70,7 +70,7 @@ pub fn Tree() -> impl IntoView {
                             action=add_branch
                             on:submit=move |_| set_show_modal.update(|x| *x = false)
                         >
-                            <FormH1 text="Create a new branch"/>
+                            <FormH1 text="Create a new branch".to_string()/>
                             {move || {
                                 tree()
                                     .map(|tree| {

@@ -263,7 +263,7 @@ pub fn Branch() -> impl IntoView {
                     action=edit_branch
                     on:submit=move |_| set_editing.update(|x| *x = false)
                 >
-                    <FormH1 text="Editing branch"/>
+                    <FormH1 text="Editing branch".to_string()/>
                     <input type="hidden" name="id" value=id/>
                     <FormInput
                         input_type="text"
@@ -286,7 +286,7 @@ pub fn Branch() -> impl IntoView {
                     action=add_stem
                     on:submit=move |_| set_adding_stem.update(|x| *x = false)
                 >
-                    <FormH1 text="Grow a stem"/>
+                    <FormH1 text="Grow a stem".to_string()/>
                     <input type="hidden" name="branch_id" value=id/>
                     <FormInput
                         input_type="text"

@@ -262,7 +262,7 @@ pub fn Stem() -> impl IntoView {
                     action=edit_stem
                     on:submit=move |_| set_editing.update(|x| *x = false)
                 >
-                    <FormH1 text="Editing stem"/>
+                    <FormH1 text="Editing stem".to_string()/>
                     <input type="hidden" name="id" value=id/>
                     <FormInput
                         input_type="text"
@@ -285,7 +285,7 @@ pub fn Stem() -> impl IntoView {
                     action=add_leaf
                     on:submit=move |_| set_adding_leaf.update(|x| *x = false)
                 >
-                    <FormH1 text="Grow a leaf"/>
+                    <FormH1 text="Grow a leaf".to_string()/>
                     <input type="hidden" name="stem_id" value=id/>
                     <FormInput
                         input_type="text"
@@ -313,22 +313,23 @@ pub fn StemOverview(
     stem: Stem,
     delete_stem: Action<DeleteStem, Result<(), ServerFnError>>,
 ) -> impl IntoView {
-    let id = stem.id();
+    let id = format!("/stem/{}", stem.id());
+    let name = stem.name();
 
     view! {
         <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-primary-500 transition ease-out">
-            <A href=format!("/stem/{}", id) class="block p-5">
-                <p class="text-2xl text-center text-white hyphens-auto">{stem.name()}</p>
+            <A href=id.clone() class="block p-5">
+                <p class="text-2xl text-center text-white hyphens-auto">{name}</p>
             </A>
             <Controls class="absolute -top-4 right-4">
-                <ControlA href=&format!("/stem/{}", id) size="5" icon=icondata::FaPencilSolid/>
+                <ControlA href=id size="5".to_string() icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_stem
                     on_submit=move |_| {}
                     size="5"
                     icon=icondata::FaTrashCanRegular
                 >
-                    <input type="hidden" name="id" value=id/>
+                    <input type="hidden" name="id" value=stem.id()/>
                 </ControlAction>
             </Controls>
         </Card>
