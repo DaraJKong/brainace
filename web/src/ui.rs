@@ -283,6 +283,7 @@ pub fn FormInput<'a>(
     label: &'a str,
     placeholder: &'a str,
     name: &'a str,
+    #[prop(optional, into)] default_value: Option<AttributeValue>,
     #[prop(optional, into)] maxlength: Option<AttributeValue>,
 ) -> impl IntoView {
     let input_type = input_type.to_string();
@@ -301,6 +302,7 @@ pub fn FormInput<'a>(
                 id=id
                 placeholder=placeholder
                 name=name
+                value=default_value
                 maxlength=maxlength
                 class="w-full p-2 rounded-md bg-transparent text-white outline outline-2 outline-primary-500 caret-primary-400 selection:bg-primary-400 focus:outline-offset-2 focus:outline-primary-300 transition-all ease-out"
             />

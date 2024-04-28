@@ -1,16 +1,18 @@
 use crate::{
     error_template::ErrorTemplate,
-    ui::{Card, ControlA, ControlAction, ControlBtn, Controls, Loading},
+    ui::{
+        Card, ControlAction, ControlBtn, Controls, FormH1, FormInput, FormSubmit, Loading, Modal,
+    },
 };
 use brainace_core::{Leaf, Rating, State};
 use chrono::{DateTime, Utc};
 use leptos::{
-    component, create_resource, create_signal, leptos_server::Submission, server, view, Action,
-    CollectView, ErrorBoundary, IntoView, Params, ReadSignal, Resource, ServerFnError, SignalGet,
-    SignalUpdate, SignalWith, Transition,
+    component, create_resource, create_server_multi_action, create_signal,
+    leptos_server::Submission, server, view, Action, CollectView, ErrorBoundary, IntoView, Params,
+    ReadSignal, Resource, ServerFnError, SignalGet, SignalUpdate, SignalWith, Transition,
 };
 use leptos_icons::Icon;
-use leptos_router::{use_params, Params, A};
+use leptos_router::{use_params, MultiActionForm, Params, A};
 
 #[server(GetLeaf, "/api")]
 pub async fn get_leaf(id: u32) -> Result<Leaf, ServerFnError> {
@@ -93,6 +95,23 @@ pub async fn add_leaf(stem_id: u32, front: String, back: String) -> Result<(), S
             .bind(front)
             .bind(back)
             .bind(card_json)
+            .execute(&pool)
+            .await
+            .map(|_| ())?,
+    )
+}
+
+#[server(EditLeaf, "/api")]
+pub async fn edit_leaf(id: u32, front: String, back: String) -> Result<(), ServerFnError> {
+    use crate::app::ssr::pool;
+
+    let pool = pool()?;
+
+    Ok(
+        sqlx::query("UPDATE leaves SET front = $2, back = $3 WHERE id = $1")
+            .bind(id)
+            .bind(front)
+            .bind(back)
             .execute(&pool)
             .await
             .map(|_| ())?,
@@ -292,7 +311,10 @@ pub fn LeafOverview(
     leaf: Leaf,
     delete_leaf: Action<DeleteLeaf, Result<(), ServerFnError>>,
 ) -> impl IntoView {
+    let (editing, set_editing) = create_signal(false);
     let (hidden, set_hidden) = create_signal(true);
+
+    let edit_leaf = create_server_multi_action::<EditLeaf>();
 
     let id = format!("/leaf/{}", leaf.id());
     let color = format!(
@@ -312,13 +334,8 @@ pub fn LeafOverview(
         <Card class="mx-auto relative w-1/2 hover:scale-105 hover:border-primary-500 transition ease-out">
             <A href=id.clone() class="flex place-items-center">
                 <div class="w-40 p-5 shrink-0">
-                    <Icon
-                        icon=icondata::FaLeafSolid
-                        class=color
-                    />
-                    <span class="ml-2 font-medium text-white">
-                        {state}
-                    </span>
+                    <Icon icon=icondata::FaLeafSolid class=color/>
+                    <span class="ml-2 font-medium text-white">{state}</span>
                 </div>
                 <div class="grow border-l-2 border-secondary-750">
                     <div class="p-5">
@@ -327,9 +344,7 @@ pub fn LeafOverview(
                     <div class=("hidden", hidden)>
                         <hr class="border-t-1 border-secondary-750"/>
                         <div class="p-5">
-                            <p class="text-2xl text-center text-primary-500 hyphens-auto">
-                                {back}
-                            </p>
+                            <p class="text-2xl text-center text-primary-500 hyphens-auto">{back}</p>
                         </div>
                     </div>
                 </div>
@@ -340,7 +355,11 @@ pub fn LeafOverview(
                     size="5"
                     icon=icondata::FaEyeRegular
                 />
-                <ControlA href=id size="5".to_string() icon=icondata::FaPencilSolid/>
+                <ControlBtn
+                    on_click=move |_| { set_editing.update(|x| *x = true) }
+                    size="5"
+                    icon=icondata::FaPencilSolid
+                />
                 <ControlAction
                     action=delete_leaf
                     on_submit=move |_| {}
@@ -351,6 +370,38 @@ pub fn LeafOverview(
                 </ControlAction>
             </Controls>
         </Card>
+        <Modal
+            id="edit_leaf_modal"
+            show=editing
+            on_blur=move |_| set_editing.update(|x| *x = false)
+        >
+            <Card class="w-1/3 p-6">
+                <MultiActionForm
+                    action=edit_leaf
+                    on:submit=move |_| set_editing.update(|x| *x = false)
+                >
+                    <FormH1 text="Editing leaf".to_string()/>
+                    <input type="hidden" name="id" value=id/>
+                    <FormInput
+                        input_type="text"
+                        id="Front"
+                        label="Front"
+                        placeholder="Front"
+                        name="front"
+                        default_value=leaf.front()
+                    />
+                    <FormInput
+                        input_type="text"
+                        id="Back"
+                        label="Back"
+                        placeholder="Back"
+                        name="back"
+                        default_value=leaf.back()
+                    />
+                    <FormSubmit msg="SAVE"/>
+                </MultiActionForm>
+            </Card>
+        </Modal>
     }
 }
 
