@@ -316,7 +316,8 @@ pub fn LeafOverview(
 
     let edit_leaf = create_server_multi_action::<EditLeaf>();
 
-    let id = format!("/leaf/{}", leaf.id());
+    let href = format!("/leaf/{}", leaf.id());
+    let id = leaf.id();
     let color = format!(
         "inline-block size-5 {}",
         match leaf.card().state.clone() {
@@ -332,7 +333,7 @@ pub fn LeafOverview(
 
     view! {
         <Card class="mx-auto relative w-1/2 hover:scale-105 hover:border-primary-500 transition ease-out">
-            <A href=id.clone() class="flex place-items-center">
+            <A href class="flex place-items-center">
                 <div class="w-40 p-5 shrink-0">
                     <Icon icon=icondata::FaLeafSolid class=color/>
                     <span class="ml-2 font-medium text-white">{state}</span>
@@ -366,7 +367,7 @@ pub fn LeafOverview(
                     size="5"
                     icon=icondata::FaTrashCanRegular
                 >
-                    <input type="hidden" name="id" value=leaf.id()/>
+                    <input type="hidden" name="id" value=id.clone()/>
                 </ControlAction>
             </Controls>
         </Card>

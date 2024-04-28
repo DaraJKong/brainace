@@ -313,16 +313,16 @@ pub fn StemOverview(
     stem: Stem,
     delete_stem: Action<DeleteStem, Result<(), ServerFnError>>,
 ) -> impl IntoView {
-    let id = format!("/stem/{}", stem.id());
+    let href = format!("/stem/{}", stem.id());
     let name = stem.name();
 
     view! {
         <Card class="mx-auto relative w-1/3 hover:scale-105 hover:border-primary-500 transition ease-out">
-            <A href=id.clone() class="block p-5">
+            <A href=href.clone() class="block p-5">
                 <p class="text-2xl text-center text-white hyphens-auto">{name}</p>
             </A>
             <Controls class="absolute -top-4 right-4">
-                <ControlA href=id size="5".to_string() icon=icondata::FaPencilSolid/>
+                <ControlA href size="5".to_string() icon=icondata::FaPencilSolid/>
                 <ControlAction
                     action=delete_stem
                     on_submit=move |_| {}
