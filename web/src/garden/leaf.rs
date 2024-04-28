@@ -371,12 +371,8 @@ pub fn LeafOverview(
                 </ControlAction>
             </Controls>
         </Card>
-        <Modal
-            id="edit_leaf_modal"
-            show=editing
-            on_blur=move |_| set_editing.update(|x| *x = false)
-        >
-            <Card class="w-1/3 p-6">
+        <Modal show=editing on_blur=move |_| set_editing.update(|x| *x = false)>
+            <Card class="w-1/3 p-6" clone:leaf>
                 <MultiActionForm
                     action=edit_leaf
                     on:submit=move |_| set_editing.update(|x| *x = false)

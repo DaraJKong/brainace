@@ -253,11 +253,7 @@ pub fn Branch() -> impl IntoView {
 
             </ErrorBoundary>
         </Transition>
-        <Modal
-            id="edit_branch_modal"
-            show=editing
-            on_blur=move |_| set_editing.update(|x| *x = false)
-        >
+        <Modal show=editing on_blur=move |_| set_editing.update(|x| *x = false)>
             <Card class="w-1/3 p-6">
                 <MultiActionForm
                     action=edit_branch
@@ -276,11 +272,7 @@ pub fn Branch() -> impl IntoView {
                 </MultiActionForm>
             </Card>
         </Modal>
-        <Modal
-            id="add_stem_modal"
-            show=adding_stem
-            on_blur=move |_| set_adding_stem.update(|x| *x = false)
-        >
+        <Modal show=adding_stem on_blur=move |_| set_adding_stem.update(|x| *x = false)>
             <Card class="w-1/3 p-6">
                 <MultiActionForm
                     action=add_stem

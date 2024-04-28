@@ -1,12 +1,13 @@
 use icondata::Icon;
 use leptos::{
-    component,
+    component, document,
     ev::{MouseEvent, SubmitEvent},
     event_target,
     server_fn::{
         client::Client, codec::PostUrl, error::NoCustomError, request::ClientReq, ServerFn,
     },
-    view, Action, AttributeValue, Children, IntoView, ReadSignal, Serializable, ServerFnError,
+    store_value, view, Action, AttributeValue, Children, ChildrenFn, IntoView, Portal, ReadSignal,
+    Serializable, ServerFnError, Show,
 };
 use leptos_icons::*;
 use leptos_router::{ActionForm, A};
@@ -132,36 +133,51 @@ pub fn Card<'a>(children: Children, #[prop(optional)] class: Option<&'a str>) ->
 }
 
 #[component]
-pub fn Modal<'a, F: Fn(MouseEvent) + 'static>(
-    id: &'a str,
+pub fn ModalMountPoint() -> impl IntoView {
+    view! { <div id="modal"></div> }
+}
+
+#[component]
+pub fn Modal<F: Fn(MouseEvent) + 'static>(
     show: ReadSignal<bool>,
     on_blur: F,
-    children: Children,
+    children: ChildrenFn,
 ) -> impl IntoView {
-    let id = id.to_string();
-    let selector = format!("#{id}");
+    let on_blur = store_value(on_blur);
+    let children = store_value(children);
 
     view! {
-        <div class:hidden=move || !show()>
-            <div class="fixed top-0 left-0 size-full bg-black opacity-25"></div>
-            <div
-                on:click=move |e| {
-                    if event_target::<Element>(&e.clone().into())
-                        .closest(&selector)
-                        .unwrap()
-                        .is_none()
-                    {
-                        on_blur(e);
+        <Show when=move || show() fallback=|| ()>
+            <Portal mount=document()
+                .get_element_by_id("modal")
+                .unwrap()>
+
+                {
+                    let selector = format!("#modal_contents");
+                    view! {
+                        <div class="fixed top-0 left-0 size-full bg-black opacity-25"></div>
+                        <div
+                            on:click=move |e| {
+                                if event_target::<Element>(&e.clone().into())
+                                    .closest(&selector)
+                                    .unwrap()
+                                    .is_none()
+                                {
+                                    on_blur.with_value(|on_blur| on_blur(e));
+                                }
+                            }
+
+                            class="fixed top-0 left-0 size-full flex justify-center items-center"
+                        >
+                            <div id="modal_contents" class="contents">
+                                {children.with_value(|children| children())}
+                            </div>
+                        </div>
                     }
                 }
 
-                class="fixed top-0 left-0 size-full flex justify-center items-center"
-            >
-                <div id=id class="contents">
-                    {children()}
-                </div>
-            </div>
-        </div>
+            </Portal>
+        </Show>
     }
 }
 

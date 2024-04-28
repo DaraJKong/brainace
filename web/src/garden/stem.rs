@@ -252,11 +252,7 @@ pub fn Stem() -> impl IntoView {
 
             </ErrorBoundary>
         </Transition>
-        <Modal
-            id="edit_stem_modal"
-            show=editing
-            on_blur=move |_| set_editing.update(|x| *x = false)
-        >
+        <Modal show=editing on_blur=move |_| set_editing.update(|x| *x = false)>
             <Card class="w-1/3 p-6">
                 <MultiActionForm
                     action=edit_stem
@@ -275,11 +271,7 @@ pub fn Stem() -> impl IntoView {
                 </MultiActionForm>
             </Card>
         </Modal>
-        <Modal
-            id="add_leaf_modal"
-            show=adding_leaf
-            on_blur=move |_| set_adding_leaf.update(|x| *x = false)
-        >
+        <Modal show=adding_leaf on_blur=move |_| set_adding_leaf.update(|x| *x = false)>
             <Card class="w-1/3 p-6">
                 <MultiActionForm
                     action=add_leaf

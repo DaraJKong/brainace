@@ -11,7 +11,7 @@ use crate::{
         tree::Tree,
     },
     review::{ReviewNow, ReviewToday},
-    ui::{SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
+    ui::{ModalMountPoint, SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
     users::{get_user, Login, LoginSection, Logout, Profile, Signup},
 };
 
@@ -104,5 +104,6 @@ pub fn App() -> impl IntoView {
                 <Route path="/review" view=ReviewNow/>
             </Routes>
         </Router>
+        <ModalMountPoint/>
     }
 }

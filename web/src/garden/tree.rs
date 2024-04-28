@@ -60,11 +60,7 @@ pub fn Tree() -> impl IntoView {
                         })
                         .unwrap_or_default()
                 }}
-                <Modal
-                    id="add_branch_modal"
-                    show=show_modal
-                    on_blur=move |_| set_show_modal.update(|x| *x = false)
-                >
+                <Modal show=show_modal on_blur=move |_| set_show_modal.update(|x| *x = false)>
                     <Card class="w-1/3 p-6">
                         <MultiActionForm
                             action=add_branch
