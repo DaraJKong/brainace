@@ -12,7 +12,7 @@ use crate::{
     },
     review::{ReviewNow, ReviewToday},
     ui::{ModalMountPoint, SideBar, SideBarItem, SideBarItems, SideBarSeparator, SideContent},
-    users::{get_user, Login, LoginSection, Logout, Profile, Signup},
+    users::{get_user, ChangePassword, Login, LoginSection, Logout, Profile, Signup},
 };
 
 #[cfg(feature = "ssr")]
@@ -37,6 +37,8 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<Login>();
     let signup = create_server_action::<Signup>();
     let logout = create_server_action::<Logout>();
+
+    let change_password = create_server_action::<ChangePassword>();
 
     let user = create_resource(
         move || {
@@ -99,6 +101,10 @@ pub fn App() -> impl IntoView {
                     <Route path="/profile" view=move || view! { <Profile user logout/> }/>
                     <Route path="/login" view=move || view! { <Login action=login/> }/>
                     <Route path="/signup" view=move || view! { <Signup action=signup/> }/>
+                    <Route
+                        path="/change-password"
+                        view=move || view! { <ChangePassword action=change_password/> }
+                    />
                 </Route>
                 <Route path="/review-today" view=ReviewToday/>
                 <Route path="/review" view=ReviewNow/>

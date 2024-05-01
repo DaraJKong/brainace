@@ -1,8 +1,8 @@
 use crate::{
     error_template::ErrorTemplate,
     ui::{
-        Card, FormCheckbox, FormH1, FormInput, FormSubmit, Loading, ServerAction, SideBarAction,
-        SideBarItem, SideBarItemCircle, SideBarItems,
+        ActionA, Card, FormCheckbox, FormH1, FormInput, FormSubmit, Loading, ServerAction,
+        SideBarAction, SideBarItem, SideBarItemCircle, SideBarItems,
     },
 };
 use brainace_core::auth::User;
@@ -111,6 +111,49 @@ pub async fn logout() -> Result<(), ServerFnError> {
     Ok(())
 }
 
+#[server(ChangePassword, "/api")]
+pub async fn change_password(
+    password: String,
+    new_password: String,
+    new_password_confirmation: String,
+) -> Result<(), ServerFnError> {
+    use self::ssr::*;
+
+    let user = get_user().await?;
+    let pool = pool()?;
+
+    if let Some(user) = user {
+        match verify(password, &user.password)? {
+            true => {
+                if new_password != new_password_confirmation {
+                    return Err(ServerFnError::ServerError(
+                        "Passwords did not match.".to_string(),
+                    ));
+                }
+
+                let new_password_hashed = hash(new_password, DEFAULT_COST).unwrap();
+
+                sqlx::query("UPDATE users SET password = $2 WHERE id = $1")
+                    .bind(user.id)
+                    .bind(new_password_hashed)
+                    .execute(&pool)
+                    .await?;
+
+                leptos_axum::redirect("/");
+
+                Ok(())
+            }
+            false => Err(ServerFnError::ServerError(
+                "Wrong current password.".to_string(),
+            )),
+        }
+    } else {
+        Err(ServerFnError::ServerError(
+            "User does not exist.".to_string(),
+        ))
+    }
+}
+
 #[component]
 pub fn Profile(
     user: Resource<(usize, usize, usize), Result<Option<User>, ServerFnError>>,
@@ -152,6 +195,7 @@ pub fn Profile(
                                     <div class="flex items-center space-x-4">
                                         <p class="text-2xl text-white">{user.username}</p>
                                         <ServerAction action=logout msg="LOG OUT"/>
+                                        <ActionA href="/change-password" msg="CHANGE PASSWORD"/>
                                     </div>
                                 }
                                     .into_view()
@@ -284,5 +328,40 @@ pub fn LoginSection(
             }}
 
         </Suspense>
+    }
+}
+
+#[component]
+pub fn ChangePassword(action: Action<ChangePassword, Result<(), ServerFnError>>) -> impl IntoView {
+    view! {
+        <div class="h-full flex flex-col justify-center items-center">
+            <Card class="w-1/3 p-6">
+                <ActionForm action=action>
+                    <FormH1 text="Change your password".to_string()/>
+                    <FormInput
+                        input_type="password"
+                        id="password"
+                        label="Current Password"
+                        placeholder="Password"
+                        name="password"
+                    />
+                    <FormInput
+                        input_type="password"
+                        id="new_password"
+                        label="New Password"
+                        placeholder="New password"
+                        name="new_password"
+                    />
+                    <FormInput
+                        input_type="password"
+                        id="new_password_confirmation"
+                        label="Confirm New Password"
+                        placeholder="New password again"
+                        name="new_password_confirmation"
+                    />
+                    <FormSubmit msg="CHANGE"/>
+                </ActionForm>
+            </Card>
+        </div>
     }
 }
