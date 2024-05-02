@@ -3,6 +3,7 @@ Build and organize knowledge in a tree or graph structure and master it piece by
 
 ## Why?
 Brainace aims to be the best free and open-source learning app. One of its core goals is to educate people about the empirically best studying methods and memory techniques.
+It is currently ideal for individuals and students, but the goal is for Brainace to be useful for enterprises, schools, teachers, and teams.
 
 ## Goals
 - Quality UX & UI
@@ -18,4 +19,5 @@ Brainace aims to be the best free and open-source learning app. One of its core 
 - [ ] Cloud Storage (Database)
 - [ ] Local Storage (JSON)
 - [ ] Social Media (Friends, Sharing)
-- [ ] Fun
+- [ ] For enterprise / school / teacher
+- [ ] Fun like a game
