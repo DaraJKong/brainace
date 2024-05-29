@@ -3,3 +3,5 @@ Good Anki alternative:
 
 Best spaced repetition tips:
 	https://borretti.me/article/effective-spaced-repetition
+
+https://e-student.org/spaced-repetition/
