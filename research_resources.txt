@@ -1,1 +1,5 @@
-https://borretti.me/article/effective-spaced-repetition
+Good Anki alternative:
+	https://mochi.cards/
+
+Best spaced repetition tips:
+	https://borretti.me/article/effective-spaced-repetition
