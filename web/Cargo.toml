@@ -15,7 +15,7 @@ path = "../core"
 [dependencies]
 anyhow.workspace = true
 console_log = "1.0"
-rand = { version = "0.8", features = ["min_const_gen"], optional = true }
+rand = { version = "0.8", features = ["min_const_gen"] }
 chrono.workspace = true
 console_error_panic_hook = "0.1"
 futures = "0.3"
@@ -70,7 +70,6 @@ ssr = [
   "dep:async-trait",
   "dep:sqlx",
   "dep:bcrypt",
-  "dep:rand",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",

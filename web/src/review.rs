@@ -9,6 +9,7 @@ use leptos::{
     component, create_resource, create_signal, provide_context, spawn_local, use_context, view,
     ErrorBoundary, IntoView, SignalUpdate, Transition, WriteSignal,
 };
+use rand::{seq::SliceRandom, thread_rng};
 
 #[component]
 pub fn ReviewToday() -> impl IntoView {
@@ -33,7 +34,8 @@ pub fn ReviewToday() -> impl IntoView {
                                     view! { <p class="text-white">"No leaves were found."</p> }
                                         .into_view()
                                 } else {
-                                    let due_today_leaves = utils::filter_due_today(leaves);
+                                    let mut due_today_leaves = utils::filter_due_today(leaves);
+                                    due_today_leaves.shuffle(&mut thread_rng());
                                     provide_context(due_today_leaves);
                                     view! { <Review/> }
                                 }
@@ -69,7 +71,8 @@ pub fn ReviewNow() -> impl IntoView {
                                     view! { <p class="text-white">"No leaves were found."</p> }
                                         .into_view()
                                 } else {
-                                    let due_now_leaves = utils::filter_due_now(leaves);
+                                    let mut due_now_leaves = utils::filter_due_now(leaves);
+                                    due_now_leaves.shuffle(&mut thread_rng());
                                     provide_context(due_now_leaves);
                                     view! { <Review/> }
                                 }
