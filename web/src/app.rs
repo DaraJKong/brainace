@@ -89,7 +89,6 @@ pub fn App() -> impl IntoView {
                         }
                     }
                 >
-
                     <Route path="/" view=Dashboard/>
                     <Route path="/tree" view=Tree/>
                     <Route path="/branch" view=NoBranch/>
